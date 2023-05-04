@@ -2,3 +2,4 @@ data
 .vscode
 notebooks/saf_wave_eq_bvp.ipynb
 notebooks/saf_wave_eq_ivp.ipynb
+.DS_Store
