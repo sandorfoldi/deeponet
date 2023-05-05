@@ -7,11 +7,18 @@ from scipy.integrate import solve_ivp, solve_bvp
 
 from tqdm import tqdm
 import os
-
+import argparse
 
 def generate_dataset():
-    root = "data/d"
-    n_ic = 1000
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--root", type=str, default="data/default")
+    ap.add_argument("--n_ic", type=int, default=1000)
+    args = ap.parse_args()
+
+    root = args.root
+    n_ic = args.n_ic
+    
     train_as = np.random.choice(np.linspace(0.1, 10, 100000), n_ic, replace=False)
     train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), n_ic, replace=False)
     x0 = -np.pi
