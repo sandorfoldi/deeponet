@@ -8,6 +8,45 @@ from scipy.integrate import solve_ivp, solve_bvp
 from tqdm import tqdm
 import os
 
+
+def generate_dataset():
+    root = "data/d"
+    n_ic = 1000
+    train_as = np.random.choice(np.linspace(0.1, 10, 100000), n_ic, replace=False)
+    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), n_ic, replace=False)
+    x0 = -np.pi
+    x1 = np.pi
+    t1 = 100
+    dt = 1
+    dx = 0.063
+    c = 1
+    sensors = np.linspace(-np.pi, np.pi, 10)
+
+    i = list(range(n_ic))
+
+    if os.path.exists(root):
+        r = input(f'{root} exists, delete? (y/n)')
+        if r == 'y':
+            shutil.rmtree(root)
+        else:
+            exit(0)
+    os.makedirs(root, exist_ok=False)
+
+    for a, b, i in tqdm(zip(train_as, train_bs, i)):
+        generate_simulation(
+            root=root,
+            i=i, 
+            ic_func=ic_sin(a, b), 
+            sensors=sensors,
+            x0=x0,
+            x1=x1,
+            t1=t1,
+            dt=dt,
+            dx=dx,
+            c=c
+            )
+
+
 def gen_wave_data_ivp(
     c: float, x0: float, x1: float, t1: float, dt: float, dx: float, ic: Callable
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -48,48 +87,7 @@ def sense_func(func: Callable, sensors: np.ndarray) -> np.ndarray:
 def ic_sin(a, b):
     return lambda x: np.sin(a * x + b)
 
-
-def generate_simulation():
-    ic_func = ic_sin(1, 0)
-    sensors = np.linspace(-np.pi, np.pi, 10)
-    y, x, t = gen_wave_data_ivp(
-        c=1, x0=-np.pi, x1=np.pi, t1=100, dt=1, dx=0.063, ic=ic_func
-    )
-
-    u = sense_func(ic_func, sensors)
-    data = np.array(
-        [(x, t, y, u)],
-        dtype=[
-            ("x", np.ndarray),
-            ("t", np.ndarray),
-            ("y", np.ndarray),
-            ("u", np.ndarray),
-        ],
-    )
-    np.save("data/0.npy", data)
-    # viz_animate(u, x, t)
-    print(y.shape)
-    plt.imshow(y)
-    plt.show()
-    # wave_eq_discovery()
-
-
-def generate_simulation_1(i, a, b):
-    ic_func = ic_sin(a, b)
-    sensors = np.linspace(-np.pi, np.pi, 10)
-    y, x, t = gen_wave_data_ivp(
-        c=1, x0=-np.pi, x1=np.pi, t1=100, dt=1, dx=0.063, ic=ic_func
-    )
-
-    u = sense_func(ic_func, sensors)
-    x = np.stack([x, t], axis=1)
-    
-    np.save(f'data/{i}_x.npy', x)
-    np.save(f'data/{i}_y.npy', y)
-    np.save(f'data/{i}_u.npy', u)
-
-
-def generate_simulation2(root, i, ic_func, sensors, x0, x1, t1, dt, dx, c):
+def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, dt, dx, c):
     y, x, t = gen_wave_data_ivp(
         c=1, x0=x0, x1=x1, t1=t1, dt=dt, dx=dx, ic=ic_func
     )
@@ -105,57 +103,6 @@ def generate_simulation2(root, i, ic_func, sensors, x0, x1, t1, dt, dx, c):
         ],
     )
     np.save(f"{os.path.join(root, str(i))}.npy", data)
-
-def get_points():
-    num_points = 100
-    arr_size = 100000
-    train_as = np.random.choice(np.linspace(0.1, 10, arr_size), 100, replace=False)
-    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, arr_size), 100, replace=False)
-
-    train_xs = np.random.choice(list(range(100)), 100000, replace=True)
-    train_ts = np.random.choice(list(range(100)), 100000, replace=True)
-
-    return train_as, train_bs, train_xs, train_ts
-
-
-
-
-def generate_dataset():
-    root = "data/c"
-    n_ic = 1000
-    train_as = np.random.choice(np.linspace(0.1, 10, 100000), n_ic, replace=False)
-    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), n_ic, replace=False)
-    x0 = -np.pi
-    x1 = np.pi
-    t1 = 100
-    dt = 1
-    dx = 0.063
-    c = 1
-    sensors = np.linspace(-np.pi, np.pi, 10)
-
-    i = list(range(n_ic))
-
-    if os.path.exists(root):
-        r = input(f'{root} exists, delete? (y/n)')
-        if r == 'y':
-            shutil.rmtree(root)
-        else:
-            exit(0)
-    os.makedirs(root, exist_ok=False)
-
-    for a, b, i in tqdm(zip(train_as, train_bs, i)):
-        generate_simulation2(
-            root=root,
-            i=i, 
-            ic_func=ic_sin(a, b), 
-            sensors=sensors,
-            x0=x0,
-            x1=x1,
-            t1=t1,
-            dt=dt,
-            dx=dx,
-            c=c
-            )
 
 
 if __name__ == "__main__":
