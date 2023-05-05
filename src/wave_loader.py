@@ -1,21 +1,33 @@
 import torch
 import numpy as np
 from glob import glob
+import math
 
 
-def get_wave_datasets(paths, device='cpu', splits = (0.8, 0.2)):
+def find_closest_factors(x):
+    sqrt_x = int(math.sqrt(x))  # Get the integer square root of x
+    for i in range(sqrt_x, 0, -1):  # Try dividing x by integers in descending order
+        if x % i == 0:  # If i divides x without remainder, we've found a factor
+            return (i, x // i)  # Return the factors (i, x//i)
+
+
+def get_wave_datasets(paths, device='cpu', splits = (0.8, 0.2), n_x=10, n_t=10):
     # load and shuffle paths
     paths = np.array(paths)
     np.random.shuffle(paths)
 
+    n_ic = len(paths)
+    n_ic_0, n_ic_1 = find_closest_factors(n_ic)
+
     # create and shuffle x (place) and t (time) indices
-    x_idxs = np.array(range(100))
-    t_idxs = np.array(range(100))
+    x_idxs = np.array(range(n_x*n_ic_0))
+    t_idxs = np.array(range(n_t*n_ic_1))
 
     np.random.shuffle(x_idxs)
     np.random.shuffle(t_idxs)
 
     xt_idxs = np.array([(x, t) for x in x_idxs for t in t_idxs])
+    assert xt_idxs.shape == (n_ic*n_x*n_t, 2)
 
     # split paths, x_idxs, and t_idxs into train and val
     assert len(splits) == 2 and sum(splits) == 1, 'splits must be a tuple of length 2 and sum to 1'
@@ -23,8 +35,8 @@ def get_wave_datasets(paths, device='cpu', splits = (0.8, 0.2)):
     train_paths = paths[:int(len(paths) * splits[0])]
     val_paths = paths[int(len(paths) * splits[0]):]
 
-    train_xt_idxs = xt_idxs[:int(len(xt_idxs) * splits[0])].reshape([-1, 100, 2])
-    val_xt_idxs = xt_idxs[int(len(xt_idxs) * splits[0]):].reshape([-1, 100, 2])
+    train_xt_idxs = xt_idxs[:int(len(xt_idxs) * splits[0])].reshape([int(splits[0]*n_ic), n_x*n_t, 2])
+    val_xt_idxs = xt_idxs[int(len(xt_idxs) * splits[0]):].reshape([int(splits[1]*n_ic), n_x*n_t, 2])
 
     # load train data
     train_xts = []
@@ -84,8 +96,10 @@ class WaveDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    paths = glob('data/a/*.npy')
+    paths = glob('data/b/*.npy')
     ds_train, ds_valid = get_wave_datasets(paths)
     for i in range(10):
         xt, y, u = ds_train[i]
         pass
+    
+    # print(find_closest_factors(1000000))
