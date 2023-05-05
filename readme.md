@@ -23,7 +23,10 @@ env                            # virtual environment created by get_started.sh
 │   └── activate
 └── ...
 notebooks                      # jupyter notebooks
-runs                           # outputs of the training sessions
+└── ...
+runs                           # outputs of the training 
+└── ...
+sessions
 src                            # codebase
 ├── viz.py                     # vizualizations
 ├── wave_generator.py          # script that generates data for the wave equation 
