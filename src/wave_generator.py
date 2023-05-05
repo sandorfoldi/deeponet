@@ -131,10 +131,6 @@ def generate_dataset():
         generate_simulation2(i)
 
 
-        
-
-
-
 if __name__ == "__main__":
     # generate_simulation()
     generate_dataset()
