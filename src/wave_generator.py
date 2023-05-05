@@ -1,3 +1,4 @@
+import shutil
 from typing import Callable, List, Tuple
 
 import numpy as np
@@ -5,7 +6,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp, solve_bvp
 
 from tqdm import tqdm
-
+import os
 
 def gen_wave_data_ivp(
     c: float, x0: float, x1: float, t1: float, dt: float, dx: float, ic: Callable
@@ -88,11 +89,9 @@ def generate_simulation_1(i, a, b):
     np.save(f'data/{i}_u.npy', u)
 
 
-def generate_simulation2(i):
-    ic_func = ic_sin(1, 0)
-    sensors = np.linspace(-np.pi, np.pi, 10)
+def generate_simulation2(root, i, ic_func, sensors, x0, x1, t1, dt, dx, c):
     y, x, t = gen_wave_data_ivp(
-        c=1, x0=-np.pi, x1=np.pi, t1=100, dt=1, dx=0.063, ic=ic_func
+        c=1, x0=x0, x1=x1, t1=t1, dt=dt, dx=dx, ic=ic_func
     )
 
     u = sense_func(ic_func, sensors)
@@ -105,7 +104,7 @@ def generate_simulation2(i):
             ("u", np.ndarray),
         ],
     )
-    np.save(f"data/{i}.npy", data)
+    np.save(f"{os.path.join(root, str(i))}.npy", data)
 
 def get_points():
     num_points = 100
@@ -122,13 +121,41 @@ def get_points():
 
 
 def generate_dataset():
-    train_as = np.random.choice(np.linspace(0.1, 10, 100000), 100, replace=False)
-    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), 100, replace=False)
-    i = list(range(100))
+    root = "data/c"
+    n_ic = 1000
+    train_as = np.random.choice(np.linspace(0.1, 10, 100000), n_ic, replace=False)
+    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), n_ic, replace=False)
+    x0 = -np.pi
+    x1 = np.pi
+    t1 = 100
+    dt = 1
+    dx = 0.063
+    c = 1
+    sensors = np.linspace(-np.pi, np.pi, 10)
+
+    i = list(range(n_ic))
+
+    if os.path.exists(root):
+        r = input(f'{root} exists, delete? (y/n)')
+        if r == 'y':
+            shutil.rmtree(root)
+        else:
+            exit(0)
+    os.makedirs(root, exist_ok=False)
 
     for a, b, i in tqdm(zip(train_as, train_bs, i)):
-        # generate_simulation_1(i, a, b)
-        generate_simulation2(i)
+        generate_simulation2(
+            root=root,
+            i=i, 
+            ic_func=ic_sin(a, b), 
+            sensors=sensors,
+            x0=x0,
+            x1=x1,
+            t1=t1,
+            dt=dt,
+            dx=dx,
+            c=c
+            )
 
 
 if __name__ == "__main__":
