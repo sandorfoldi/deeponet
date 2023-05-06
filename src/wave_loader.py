@@ -11,7 +11,6 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
 
     n_ic = len(paths)
     
-    
     # load the first array to get the shape
     data = np.load(paths[0], allow_pickle=True)
     x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
@@ -22,96 +21,54 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     t_all_idxs = np.arange(len(t))
     ic_all_idxs = np.arange(n_ic)
 
-    np.random.shuffle(ic_all_idxs)
+    
     ic_train_idxs = ic_all_idxs[:int(n_ic*splits[0])]
     ic_val_idxs = ic_all_idxs[int(n_ic*splits[0]):]
 
+    train_xts = np.zeros([0, 2])
+    train_ys = np.zeros([0, 1])
+    train_us = np.zeros([0, n_sensors])
 
-    xtic_train_idxs = np.array([(ic, x, t) for x in x_all_idxs for t in t_all_idxs for ic in ic_train_idxs])
-    xtic_val_idxs = np.array([(ic, x, t) for x in x_all_idxs for t in t_all_idxs for ic in ic_val_idxs])
+    val_xts = np.zeros([0, 2])
+    val_ys = np.zeros([0, 1])
+    val_us = np.zeros([0, n_sensors])
 
-    # randomly select n_points from them
-    select_train_idxs = np.random.choice(np.arange(xtic_train_idxs.shape[0]), n_points*n_ic, replace=False)
-    select_val_idxs = np.random.choice(np.arange(xtic_val_idxs.shape[0]), n_points*n_ic, replace=False)
-
-    xtic_train_idxs = xtic_train_idxs[select_train_idxs,:]
-    xtic_val_idxs = xtic_val_idxs[select_val_idxs,:]
-
-
-
-    ic_xt_train_idxs = []
-    ic_xt_val_idxs = []
     for ic in ic_train_idxs:
+        path = paths[ic]
+
         # create random indeces per ic
         xt_train_idxs = np.array([(x, t) for x in x_all_idxs for t in t_all_idxs])
         select_train_idxs = np.random.choice(np.arange(xt_train_idxs.shape[0]), n_points, replace=False)
         xt_train_idxs = xt_train_idxs[select_train_idxs,:]
-        pass
-
-
-
-
-    # test data leakage in initial conditions
-    train_ics = set([xtic[0] for xtic in xtic_train_idxs])
-    val_ics = set([xtic[0] for xtic in xtic_val_idxs])
-
-    assert train_ics.intersection(val_ics) == set(), 'same inital condition present in train and val'
-    
-    # regroup idxs for faster loading
-    ic_xt_train_idxs = [xtic_train_idxs[xtic_train_idxs[:, 0] == ic] for ic in ic_train_idxs]
-    ic_xt_val_idxs = [xtic_val_idxs[xtic_val_idxs[:, 0] == ic] for ic in ic_val_idxs]
-
-    # load train data
-    train_xts = []
-    train_ys = []
-    train_us = []
-
-    for xtic in ic_xt_train_idxs:
-        path = paths[xtic[0, 0]]
-        xt_idx = xtic[:, 1:]
 
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        train_xts.append([x[xt_idx[:, 0]], t[xt_idx[:, 1]]])
-        train_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
-        train_us.append(u)
+        train_xts = np.concatenate([train_xts, np.stack([x[xt_train_idxs[:, 0]], t[xt_train_idxs[:, 1]]], axis=1)], axis=0)
+        train_ys = np.concatenate([train_ys, (y[xt_train_idxs[:, 0], xt_train_idxs[:, 1]]).reshape([-1, 1])], axis=0)
+        train_us = np.concatenate([train_us, np.concatenate([u.reshape([1, -1])]*n_points, axis=0)], axis=0)
 
-    train_xts_ = []
-    for xt in train_xts:
-        x, t = xt
-        x = np.stack([x, t], axis=-1)
-        train_xts_.append(x)
-    train_xts = np.array(train_xts).reshape([-1, 2])
-    train_ys = np.array(train_ys).reshape([-1, 1])
-    train_us = np.array(train_us).reshape([-1, n_sensors])
+    for ic in ic_val_idxs:
+        path = paths[ic]
 
-    
-    # load val data
-    val_xts = []
-    val_ys = []
-    val_us = []
-
-    for xtic in ic_xt_val_idxs:
-        path = paths[xtic[0, 0]]
-        xt_idx = xtic[:, 1:]
+        # create random indeces per ic
+        xt_val_idxs = np.array([(x, t) for x in x_all_idxs for t in t_all_idxs])
+        select_val_idxs = np.random.choice(np.arange(xt_val_idxs.shape[0]), n_points, replace=False)
+        xt_val_idxs = xt_val_idxs[select_val_idxs,:]
 
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        val_xts.append([x[xt_idx[:, 0]], t[xt_idx[:, 1]]])
-        val_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
-        val_us.append(u)
+        val_xts = np.concatenate([val_xts, np.stack([x[xt_val_idxs[:, 0]], t[xt_val_idxs[:, 1]]], axis=1)], axis=0)
+        val_ys = np.concatenate([val_ys, (y[xt_val_idxs[:, 0], xt_val_idxs[:, 1]]).reshape([-1, 1])], axis=0)
+        val_us = np.concatenate([val_us, np.concatenate([u.reshape([1, -1])]*n_points, axis=0)], axis=0)
     
-    val_xts = np.array(val_xts).reshape([-1, 2])
-    val_ys = np.array(val_ys).reshape([-1, 1])
-    val_us = np.array(val_us).reshape([-1, n_sensors])
+    assert set([tuple(i) for i in train_us]).intersection(set([tuple(i) for i in val_us])) == set(), 'same initial condition present in train and val set'
 
-    # create and return dataloaders
-    train_loader = WaveDataset(train_xts, train_ys, train_us)
-    val_loader = WaveDataset(val_xts, val_ys, val_us)
+    ds_train = WaveDataset(train_xts, train_ys, train_us)
+    ds_valid = WaveDataset(val_xts, val_ys, val_us)
 
-    return train_loader, val_loader
+    return ds_train, ds_valid
 
 
 class WaveDataset(torch.utils.data.Dataset):
@@ -128,9 +85,9 @@ class WaveDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    paths = glob('data/default/*.npy')
+    paths = glob('data/10/*.npy')
     ds_train, ds_valid = get_wave_datasets(paths)
-    for i in range(10):
-        xt, y, u = ds_train[i]
-        pass
-    
+    dl_train, dl_valid = torch.utils.data.DataLoader(ds_train, batch_size=32), torch.utils.data.DataLoader(ds_valid, batch_size=32)
+    for x, y, u in dl_train:
+        print(x.shape, y.shape, u.shape)
+        break
