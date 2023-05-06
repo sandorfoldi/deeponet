@@ -27,7 +27,7 @@ def generate_dataset():
     dt = 1
     dx = 0.063
     c = 1
-    sensors = np.linspace(-np.pi, np.pi, 10)
+    sensors = np.linspace(-np.pi, np.pi, 100)
 
     i = list(range(n_ic))
 

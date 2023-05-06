@@ -4,7 +4,6 @@ from glob import glob
 import math
 
 
-
 def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     # load and shuffle paths
     paths = np.array(paths)
@@ -17,7 +16,8 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     data = np.load(paths[0], allow_pickle=True)
     x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-    
+    n_sensors = len(u)
+
     x_all_idxs = np.arange(len(x))
     t_all_idxs = np.arange(len(t))
     ic_all_idxs = np.arange(n_ic)
@@ -25,6 +25,7 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     np.random.shuffle(ic_all_idxs)
     ic_train_idxs = ic_all_idxs[:int(n_ic*splits[0])]
     ic_val_idxs = ic_all_idxs[int(n_ic*splits[0]):]
+
 
     xtic_train_idxs = np.array([(ic, x, t) for x in x_all_idxs for t in t_all_idxs for ic in ic_train_idxs])
     xtic_val_idxs = np.array([(ic, x, t) for x in x_all_idxs for t in t_all_idxs for ic in ic_val_idxs])
@@ -36,32 +37,54 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     xtic_train_idxs = xtic_train_idxs[select_train_idxs,:]
     xtic_val_idxs = xtic_val_idxs[select_val_idxs,:]
 
-    # test data drifting in initial conditions
+
+
+    ic_xt_train_idxs = []
+    ic_xt_val_idxs = []
+    for ic in ic_train_idxs:
+        # create random indeces per ic
+        xt_train_idxs = np.array([(x, t) for x in x_all_idxs for t in t_all_idxs])
+        select_train_idxs = np.random.choice(np.arange(xt_train_idxs.shape[0]), n_points, replace=False)
+        xt_train_idxs = xt_train_idxs[select_train_idxs,:]
+        pass
+
+
+
+
+    # test data leakage in initial conditions
     train_ics = set([xtic[0] for xtic in xtic_train_idxs])
     val_ics = set([xtic[0] for xtic in xtic_val_idxs])
 
     assert train_ics.intersection(val_ics) == set(), 'same inital condition present in train and val'
     
+    # regroup idxs for faster loading
+    ic_xt_train_idxs = [xtic_train_idxs[xtic_train_idxs[:, 0] == ic] for ic in ic_train_idxs]
+    ic_xt_val_idxs = [xtic_val_idxs[xtic_val_idxs[:, 0] == ic] for ic in ic_val_idxs]
 
     # load train data
     train_xts = []
     train_ys = []
     train_us = []
 
-    for xtic in xtic_train_idxs:
-        path = paths[xtic[0]]
-        xt_idx = xtic[1:]
+    for xtic in ic_xt_train_idxs:
+        path = paths[xtic[0, 0]]
+        xt_idx = xtic[:, 1:]
 
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        train_xts.append([x[xt_idx[0]], t[xt_idx[1]]])
-        train_ys.append(y[xt_idx[0], xt_idx[1]])
+        train_xts.append([x[xt_idx[:, 0]], t[xt_idx[:, 1]]])
+        train_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
         train_us.append(u)
 
+    train_xts_ = []
+    for xt in train_xts:
+        x, t = xt
+        x = np.stack([x, t], axis=-1)
+        train_xts_.append(x)
     train_xts = np.array(train_xts).reshape([-1, 2])
     train_ys = np.array(train_ys).reshape([-1, 1])
-    train_us = np.array(train_us).reshape([-1, 10])
+    train_us = np.array(train_us).reshape([-1, n_sensors])
 
     
     # load val data
@@ -69,20 +92,20 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     val_ys = []
     val_us = []
 
-    for xtic in xtic_val_idxs:
-        path = paths[xtic[0]]
-        xt_idx = xtic[1:]
+    for xtic in ic_xt_val_idxs:
+        path = paths[xtic[0, 0]]
+        xt_idx = xtic[:, 1:]
 
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        val_xts.append([x[xt_idx[0]], t[xt_idx[1]]])
-        val_ys.append(y[xt_idx[0], xt_idx[1]])
+        val_xts.append([x[xt_idx[:, 0]], t[xt_idx[:, 1]]])
+        val_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
         val_us.append(u)
     
     val_xts = np.array(val_xts).reshape([-1, 2])
     val_ys = np.array(val_ys).reshape([-1, 1])
-    val_us = np.array(val_us).reshape([-1, 10])
+    val_us = np.array(val_us).reshape([-1, n_sensors])
 
     # create and return dataloaders
     train_loader = WaveDataset(train_xts, train_ys, train_us)
@@ -105,7 +128,7 @@ class WaveDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    paths = glob('data/10/*.npy')
+    paths = glob('data/default/*.npy')
     ds_train, ds_valid = get_wave_datasets(paths)
     for i in range(10):
         xt, y, u = ds_train[i]
