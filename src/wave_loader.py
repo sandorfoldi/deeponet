@@ -9,7 +9,7 @@ def find_closest_factors(x):
     for i in range(sqrt_x, 0, -1):  # Try dividing x by integers in descending order
         if x % i == 0:  # If i divides x without remainder, we've found a factor
             return (i, x // i)  # Return the factors (i, x//i)
-
+    print('Debug')
 
 def get_wave_datasets(paths, device='cpu', splits = (0.8, 0.2), n_x=10, n_t=10):
     # load and shuffle paths
