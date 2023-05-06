@@ -4,82 +4,71 @@ from glob import glob
 import math
 
 
-def find_closest_factors(x):
-    sqrt_x = int(math.sqrt(x))  # Get the integer square root of x
-    for i in range(sqrt_x, 0, -1):  # Try dividing x by integers in descending order
-        if x % i == 0:  # If i divides x without remainder, we've found a factor
-            return (i, x // i)  # Return the factors (i, x//i)
-    print('Debug')
-
-def get_wave_datasets(paths, device='cpu', splits = (0.8, 0.2), n_x=10, n_t=10):
+def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     # load and shuffle paths
     paths = np.array(paths)
     np.random.shuffle(paths)
 
     n_ic = len(paths)
-    n_ic_0, n_ic_1 = find_closest_factors(n_ic)
+    
+    # load the first array to get the shape
+    data = np.load(paths[0], allow_pickle=True)
+    x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-    # create and shuffle x (place) and t (time) indices
-    x_idxs = np.array(range(n_x*n_ic_0))
-    t_idxs = np.array(range(n_t*n_ic_1))
+    n_sensors = len(u)
 
-    np.random.shuffle(x_idxs)
-    np.random.shuffle(t_idxs)
+    x_all_idxs = np.arange(len(x))
+    t_all_idxs = np.arange(len(t))
+    ic_all_idxs = np.arange(n_ic)
 
-    xt_idxs = np.array([(x, t) for x in x_idxs for t in t_idxs])
-    assert xt_idxs.shape == (n_ic*n_x*n_t, 2)
+    
+    ic_train_idxs = ic_all_idxs[:int(n_ic*splits[0])]
+    ic_val_idxs = ic_all_idxs[int(n_ic*splits[0]):]
 
-    # split paths, x_idxs, and t_idxs into train and val
-    assert len(splits) == 2 and sum(splits) == 1, 'splits must be a tuple of length 2 and sum to 1'
+    train_xts = np.zeros([0, 2])
+    train_ys = np.zeros([0, 1])
+    train_us = np.zeros([0, n_sensors])
 
-    train_paths = paths[:int(len(paths) * splits[0])]
-    val_paths = paths[int(len(paths) * splits[0]):]
+    val_xts = np.zeros([0, 2])
+    val_ys = np.zeros([0, 1])
+    val_us = np.zeros([0, n_sensors])
 
-    train_xt_idxs = xt_idxs[:int(len(xt_idxs) * splits[0])].reshape([int(splits[0]*n_ic), n_x*n_t, 2])
-    val_xt_idxs = xt_idxs[int(len(xt_idxs) * splits[0]):].reshape([int(splits[1]*n_ic), n_x*n_t, 2])
+    for ic in ic_train_idxs:
+        path = paths[ic]
 
-    # load train data
-    train_xts = []
-    train_ys = []
-    train_us = []
+        # create random indeces per ic
+        xt_train_idxs = np.array([(x, t) for x in x_all_idxs for t in t_all_idxs])
+        select_train_idxs = np.random.choice(np.arange(xt_train_idxs.shape[0]), n_points, replace=False)
+        xt_train_idxs = xt_train_idxs[select_train_idxs,:]
 
-    assert len(train_paths) == len(train_xt_idxs), 'train_paths and train_xt_idxs must be the same length'
-    for path, xt_idx in zip(train_paths, train_xt_idxs):
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        train_xts.append(np.stack([x[xt_idx[:, 0]], t[xt_idx[:, 1]]], axis=1))
-        train_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
-        train_us.append([u]*len(xt_idx))
+        train_xts = np.concatenate([train_xts, np.stack([x[xt_train_idxs[:, 0]], t[xt_train_idxs[:, 1]]], axis=1)], axis=0)
+        train_ys = np.concatenate([train_ys, (y[xt_train_idxs[:, 0], xt_train_idxs[:, 1]]).reshape([-1, 1])], axis=0)
+        train_us = np.concatenate([train_us, np.concatenate([u.reshape([1, -1])]*n_points, axis=0)], axis=0)
 
-    train_xts = np.array(train_xts).reshape([-1, 2])
-    train_ys = np.array(train_ys).reshape([-1, 1])
-    train_us = np.array(train_us).reshape([-1, 10])
+    for ic in ic_val_idxs:
+        path = paths[ic]
 
-    
-    # load val data
-    val_xts = []
-    val_ys = []
-    val_us = []
+        # create random indeces per ic
+        xt_val_idxs = np.array([(x, t) for x in x_all_idxs for t in t_all_idxs])
+        select_val_idxs = np.random.choice(np.arange(xt_val_idxs.shape[0]), n_points, replace=False)
+        xt_val_idxs = xt_val_idxs[select_val_idxs,:]
 
-    assert len(val_paths) == len(val_xt_idxs), 'val_paths and val_xt_idxs must be the same length'
-    for path, xt_idx in zip(val_paths, val_xt_idxs):
         data = np.load(path, allow_pickle=True)
         x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
-        val_xts.append(np.stack([x[xt_idx[:, 0]], t[xt_idx[:, 1]]], axis=1))
-        val_ys.append(y[xt_idx[:, 0], xt_idx[:, 1]])
-        val_us.append([u]*len(xt_idx))
+        val_xts = np.concatenate([val_xts, np.stack([x[xt_val_idxs[:, 0]], t[xt_val_idxs[:, 1]]], axis=1)], axis=0)
+        val_ys = np.concatenate([val_ys, (y[xt_val_idxs[:, 0], xt_val_idxs[:, 1]]).reshape([-1, 1])], axis=0)
+        val_us = np.concatenate([val_us, np.concatenate([u.reshape([1, -1])]*n_points, axis=0)], axis=0)
     
-    val_xts = np.array(val_xts).reshape([-1, 2])
-    val_ys = np.array(val_ys).reshape([-1, 1])
-    val_us = np.array(val_us).reshape([-1, 10])
+    assert set([tuple(i) for i in train_us]).intersection(set([tuple(i) for i in val_us])) == set(), 'same initial condition present in train and val set'
 
-    # create and return dataloaders
-    train_loader = WaveDataset(train_xts, train_ys, train_us)
-    val_loader = WaveDataset(val_xts, val_ys, val_us)
+    ds_train = WaveDataset(train_xts, train_ys, train_us)
+    ds_valid = WaveDataset(val_xts, val_ys, val_us)
 
-    return train_loader, val_loader
+    return ds_train, ds_valid
 
 
 class WaveDataset(torch.utils.data.Dataset):
@@ -96,10 +85,9 @@ class WaveDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    paths = glob('data/b/*.npy')
+    paths = glob('data/10/*.npy')
     ds_train, ds_valid = get_wave_datasets(paths)
-    for i in range(10):
-        xt, y, u = ds_train[i]
-        pass
-    
-    # print(find_closest_factors(1000000))
+    dl_train, dl_valid = torch.utils.data.DataLoader(ds_train, batch_size=32), torch.utils.data.DataLoader(ds_valid, batch_size=32)
+    for x, y, u in dl_train:
+        print(x.shape, y.shape, u.shape)
+        break
