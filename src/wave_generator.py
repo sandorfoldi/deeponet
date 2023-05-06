@@ -20,6 +20,7 @@ def generate_dataset():
     ap.add_argument("--x0", type=float, default=-np.pi)
     ap.add_argument("--x1", type=float, default=np.pi)
     ap.add_argument("--t1", type=float, default=100)
+    ap.add_argument("--c", type=float, default=1)
 
     args = ap.parse_args()
     
@@ -54,7 +55,7 @@ def generate_dataset():
 
 def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c):
     y, x, t = gen_wave_data_ivp(
-        c=1, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_t, ic=ic_func
+        c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
     )
 
     u = sense_func(ic_func, sensors)
