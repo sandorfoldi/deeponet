@@ -14,48 +14,64 @@ def generate_dataset():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", type=str, default="data/default")
     ap.add_argument("--n_ic", type=int, default=1000)
+    ap.add_argument("--n_t", type=int, default=100)
+    ap.add_argument("--n_x", type=int, default=100)
+    ap.add_argument("--n_sensors", type=int, default=100)
+    ap.add_argument("--x0", type=float, default=-np.pi)
+    ap.add_argument("--x1", type=float, default=np.pi)
+    ap.add_argument("--t1", type=float, default=100)
+
     args = ap.parse_args()
-
-    root = args.root
-    n_ic = args.n_ic
     
-    train_as = np.random.choice(np.linspace(0.1, 10, 100000), n_ic, replace=False)
-    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), n_ic, replace=False)
-    x0 = -np.pi
-    x1 = np.pi
-    t1 = 100
-    dt = 1
-    dx = 0.063
-    c = 1
-    sensors = np.linspace(-np.pi, np.pi, 100)
+    train_as = np.random.choice(np.linspace(0.1, 10, 100000), args.n_ic, replace=False)
+    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), args.n_ic, replace=False)
+    sensors = np.linspace(-np.pi, np.pi, args.n_sensors)
 
-    i = list(range(n_ic))
+    idxs = list(range(args.n_ic))
 
-    if os.path.exists(root):
-        r = input(f'{root} exists, delete? (y/n)')
+    if os.path.exists(args.root):
+        r = input(f'{args.root} exists, delete? (y/n)\n')
         if r == 'y':
-            shutil.rmtree(root)
+            shutil.rmtree(args.root)
         else:
             exit(0)
-    os.makedirs(root, exist_ok=False)
+    os.makedirs(args.root, exist_ok=False)
 
-    for a, b, i in tqdm(zip(train_as, train_bs, i)):
+    for a, b, i in tqdm(zip(train_as, train_bs, idxs)):
         generate_simulation(
-            root=root,
+            root=args.root,
             i=i, 
             ic_func=ic_sin(a, b), 
             sensors=sensors,
-            x0=x0,
-            x1=x1,
-            t1=t1,
-            dt=dt,
-            dx=dx,
-            c=c
+            x0=args.x0,
+            x1=args.x1,
+            t1=args.t1,
+            n_t=args.n_t,
+            n_x=args.n_x,
+            c=args.c
             )
 
 
+def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c):
+    y, x, t = gen_wave_data_ivp(
+        c=1, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_t, ic=ic_func
+    )
+
+    u = sense_func(ic_func, sensors)
+    data = np.array(
+        [(x, t, y, u)],
+        dtype=[
+            ("x", np.ndarray),
+            ("t", np.ndarray),
+            ("y", np.ndarray),
+            ("u", np.ndarray),
+        ],
+    )
+    np.save(f"{os.path.join(root, str(i))}.npy", data)
+
+
 def gen_wave_data_ivp(
-    c: float, x0: float, x1: float, t1: float, dt: float, dx: float, ic: Callable
+    c: float, x0: float, x1: float, t1: float, n_t: float, n_x: float, ic: Callable
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Generate wave data using the wave equation
@@ -71,8 +87,8 @@ def gen_wave_data_ivp(
     :return: x: space
     :return: t: time
     """
-    x = np.arange(x0, x1, dx)
-    t = np.arange(0, t1, dt)
+    x = np.linspace(x0, x1, n_x)
+    t = np.linspace(0, t1, n_t)
     u0 = ic(x)
     v0 = np.zeros(len(x))
     y0 = np.concatenate((u0, v0))
@@ -93,23 +109,6 @@ def sense_func(func: Callable, sensors: np.ndarray) -> np.ndarray:
 
 def ic_sin(a, b):
     return lambda x: np.sin(a * x + b)
-
-def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, dt, dx, c):
-    y, x, t = gen_wave_data_ivp(
-        c=1, x0=x0, x1=x1, t1=t1, dt=dt, dx=dx, ic=ic_func
-    )
-
-    u = sense_func(ic_func, sensors)
-    data = np.array(
-        [(x, t, y, u)],
-        dtype=[
-            ("x", np.ndarray),
-            ("t", np.ndarray),
-            ("y", np.ndarray),
-            ("u", np.ndarray),
-        ],
-    )
-    np.save(f"{os.path.join(root, str(i))}.npy", data)
 
 
 if __name__ == "__main__":
