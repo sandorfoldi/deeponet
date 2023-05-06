@@ -5,3 +5,5 @@ notebooks/saf_wave_eq_ivp.ipynb
 
 env
 .DS_Store
+
+src/__pycache__
