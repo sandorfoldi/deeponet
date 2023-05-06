@@ -9,7 +9,7 @@ pip3 install --upgrade pip
 pip3 install -r requirements.txt
 
 # Generate data
-python3 src/wave_generator.py --root data/10 --n_ic 10
+python3 src/wave_generator.py --root data/10 --n_ic 10 --n_sensors 10
 python3 src/wave_generator.py --root data/100 --n_ic 100
 python3 src/wave_generator.py --root data/1000 --n_ic 1000
 
