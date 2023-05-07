@@ -5,13 +5,13 @@ pip3 install virtualenv
 python3 -m virtualenv env
 source env/bin/activate
 
-pip install --upgrade pip
-pip install -r requirements.txt
+pip3 install --upgrade pip
+pip3 install -r requirements.txt
 
 # Generate data
-python src/wave_generator.py --root data/10 --n_ic 10
-python src/wave_generator.py --root data/100 --n_ic 100
-python src/wave_generator.py --root data/1000 --n_ic 1000
+python3 src/wave_generator.py --root data/10 --n_ic 10 --n_sensors 10
+python3 src/wave_generator.py --root data/100 --n_ic 100
+python3 src/wave_generator.py --root data/1000 --n_ic 1000
 
 # Visualize sample data
-python src/viz.py --data data/10/0.npy --mode animate
+python3 src/viz.py --data data/10/0.npy --mode animate
