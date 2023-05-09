@@ -16,12 +16,24 @@ class DeepONet(torch.nn.Module):
         self.B4 = torch.nn.Linear(n_hidden, n_hidden)
         self.B5 = torch.nn.Linear(n_hidden, n_output)
 
+        # Batch norm
+        self.BN1 = torch.nn.BatchNorm1d(n_hidden)
+        self.BN2 = torch.nn.BatchNorm1d(n_hidden)
+        self.BN3 = torch.nn.BatchNorm1d(n_hidden)
+        self.BN4 = torch.nn.BatchNorm1d(n_hidden)
+
         # Trunk net
         self.T1 = torch.nn.Linear(2, n_hidden)
         self.T2 = torch.nn.Linear(n_hidden, n_hidden)
-        self.T3 = torch.nn.Linear(n_hidden, n_output)
-        self.T4 = torch.nn.Linear(n_hidden, n_output)
+        self.T3 = torch.nn.Linear(n_hidden, n_hidden)
+        self.T4 = torch.nn.Linear(n_hidden, n_hidden)
         self.T5 = torch.nn.Linear(n_hidden, n_output)
+
+        # batch norm
+        self.TBN1 = torch.nn.BatchNorm1d(n_hidden)
+        self.TBN2 = torch.nn.BatchNorm1d(n_hidden)
+        self.TBN3 = torch.nn.BatchNorm1d(n_hidden)
+        self.TBN4 = torch.nn.BatchNorm1d(n_hidden)
 
         self.activation = torch.sin
 
@@ -32,17 +44,17 @@ class DeepONet(torch.nn.Module):
 
     def forward(self, u, y):
         # Pass through branch net
-        b = self.activation(self.B1(u))
-        b = self.activation(self.B2(b))
-        b = self.activation(self.B3(b))
-        b = self.activation(self.B4(b))
+        b = self.activation(self.BN1(self.B1(u)))
+        b = self.activation(self.BN2(self.B2(b)))
+        b = self.activation(self.BN3(self.B3(b)))
+        b = self.activation(self.BN4(self.B4(b)))
         b = self.B5(b)
 
         # Pass through trunk net
-        t = self.activation(self.T1(y))
-        t = self.activation(self.T2(t))
-        t = self.activation(self.T3(t))
-        t = self.activation(self.T4(t))
+        t = self.activation(self.TBN1(self.T1(y)))
+        t = self.activation(self.TBN2(self.T2(t)))
+        t = self.activation(self.TBN3(self.T3(t)))
+        t = self.activation(self.TBN4(self.T4(t)))
         t = self.T5(t)
 
         # Combine
