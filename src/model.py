@@ -37,8 +37,6 @@ class DeepONet(torch.nn.Module):
 
         self.activation = torch.sin
 
-        self.batch = True # Flag for batch training
-
     def set_batch(self, batch):
         self.batch = batch
 
@@ -58,10 +56,7 @@ class DeepONet(torch.nn.Module):
         t = self.T5(t)
 
         # Combine
-        if self.batch:
-            output = torch.einsum('ij,ij->i', b, t)
-        else:
-            output = b @ t
+        output = torch.einsum('ij,ij->i', b, t)
 
         return output
     
