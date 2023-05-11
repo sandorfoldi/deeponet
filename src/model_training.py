@@ -1,9 +1,10 @@
 import torch 
 import argparse
 from model import DeepONet
-from wave_loader import get_wave_dataset
+from wave_loader import get_wave_datasets
 import numpy as np
 import os
+from glob import glob
 
 """
     Class used to train and save a DeepONet model:
@@ -28,7 +29,7 @@ def save_results(losses, root, foldername, filename):
 
     np.save(root + '/results/' + foldername + '/' + filename, losses)
 
-def train_model():
+def train_model(args):
     dataset_path = args.dataset
     n_points = args.n_points
 
@@ -37,10 +38,18 @@ def train_model():
     epochs = args.epochs
     batch_size = args.batch_size
     lr = args.lr
+    
+    root = os.getcwd()
 
+    paths = glob(root + "/" + dataset_path +"/" + '*.npy')
 
+    if (len(paths) == 0):
+        raise Exception('No files found in dataset folder')
+
+    print(n_points)
+    
     # Load dataset
-    ds_train, ds_valid = get_wave_dataset(dataset_path, n_points)
+    ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points)
 
     # Train and validation loaders
     train_dataloader =  torch.utils.data.DataLoader(ds_train, batch_size=batch_size, shuffle=True)
@@ -89,7 +98,8 @@ def train_model():
 
         
             epoch_val_losses.append(np.mean(validation_losses))
-            print(f'Epoch {epoch+1}/{epochs}, train loss: {epoch_train_losses[-1]}, val loss: {epoch_val_losses[-1]}')
+        
+        print(f'Epoch {epoch+1}/{epochs}, train loss: {epoch_train_losses[-1]}, val loss: {epoch_val_losses[-1]}')
 
 
     return model, epoch_train_losses, epoch_val_losses
@@ -107,13 +117,15 @@ if __name__ == '__main__':
     args.add_argument('--outputfolder', type=str, default='default')
     args = args.parse_args()
 
+    root = os.getcwd()
+    # print(f'HEEEEEEEY: {root + args.dataset}')
+
     model, train_losses, val_losses = train_model(args)
 
     output_folder = args.outputfolder
     
     print(f'Saving model and results to {output_folder}')
 
-    root = os.getcwd()
     save_model(model, root, output_folder)
     save_results(train_losses, root, output_folder, 'train_losses')
     save_results(val_losses, root, output_folder, 'val_losses')
