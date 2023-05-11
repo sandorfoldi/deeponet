@@ -1,6 +1,6 @@
 import torch 
 import argparse
-from model import DeepONet
+from model import DeepONet, DeepONetCNN
 from wave_loader import get_wave_datasets
 import numpy as np
 import os
@@ -56,7 +56,7 @@ def train_model(args):
     validation_dataloader = torch.utils.data.DataLoader(ds_valid, batch_size=batch_size, shuffle=True)
 
     # Model
-    model = DeepONet(100, hidden_units, hidden_units) if model_name == 'FFNN' else None # Allow for CNN
+    model = DeepONet(100, hidden_units, hidden_units) if model_name == 'FFNN' else DeepONetCNN(100, hidden_units, hidden_units) # Allow for CNN
 
     # Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
