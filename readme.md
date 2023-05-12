@@ -58,12 +58,13 @@ To train on DTU HPC, first, install the project by running the get_started.sh sc
 ### Default
 Once this is completed, you can train the network on a v100 accelerator, by running bash/train_hpc_default.sh with bsub, i.e. typing:
 ```
-bsub bash/train_hpc_default.sh
+bsub < bash/train_hpc_default.sh
 ```
 Then, you can check the status of the job you have submitted by typing:
 ```
 bstat
 ```
+See further: https://www.hpc.dtu.dk/?page_id=1416
 
 ### Custom
 You can also create new training scripts, by changing some parts of the template. If you think the new scripts will be useful for others too, please save it in a new file and name it thoughtfully:)
