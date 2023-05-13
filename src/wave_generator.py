@@ -24,7 +24,7 @@ def generate_dataset():
 
     args = ap.parse_args()
     
-    train_as = np.random.choice(np.linspace(0.1, 10, 100000), args.n_ic, replace=False)
+    train_as = np.random.choice(np.linspace(0.1, 1, 100000), args.n_ic, replace=False)
     train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), args.n_ic, replace=False)
     sensors = np.linspace(-np.pi, np.pi, args.n_sensors)
 
