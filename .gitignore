@@ -1,9 +1,13 @@
-data
 .vscode
 notebooks/saf_wave_eq_bvp.ipynb
 notebooks/saf_wave_eq_ivp.ipynb
 
+data
 env
+logs
+models
+results
+
 .DS_Store
 
 src/__pycache__

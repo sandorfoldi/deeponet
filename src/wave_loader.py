@@ -4,7 +4,7 @@ from glob import glob
 import math
 
 
-def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
+def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100, device='cpu'):
     # load and shuffle paths
     paths = np.array(paths)
     np.random.shuffle(paths)
@@ -65,8 +65,8 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100):
     
     assert set([tuple(i) for i in train_us]).intersection(set([tuple(i) for i in val_us])) == set(), 'same initial condition present in train and val set'
 
-    ds_train = WaveDataset(train_xts, train_ys, train_us)
-    ds_valid = WaveDataset(val_xts, val_ys, val_us)
+    ds_train = WaveDataset(train_xts, train_ys, train_us, device=device)
+    ds_valid = WaveDataset(val_xts, val_ys, val_us, device=device)
 
     return ds_train, ds_valid
 

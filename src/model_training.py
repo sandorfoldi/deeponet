@@ -38,6 +38,9 @@ def train_model(args):
     epochs = args.epochs
     batch_size = args.batch_size
     lr = args.lr
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    print(f'Device:\t{device}')
     
     root = os.getcwd()
 
@@ -47,7 +50,7 @@ def train_model(args):
         raise Exception('No files found in dataset folder')
     
     # Load dataset
-    ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points)
+    ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points, device=device)
 
     # Train and validation loaders
     train_dataloader =  torch.utils.data.DataLoader(ds_train, batch_size=batch_size, shuffle=True)
@@ -55,6 +58,17 @@ def train_model(args):
 
     # Model
     model = DeepONet(100, hidden_units, hidden_units) if model_name == 'FFNN' else DeepONetCNN(100, hidden_units, hidden_units) # Allow for CNN
+    model.to(device)
+
+    # asserting model and dataset devices
+    model_device = next(model.parameters()).device
+    sample = next(iter(train_dataloader))
+    x_device, y_device, u_device = sample[0].device, sample[1].device, sample[2].device
+    
+    assert model_device == device, "model not on correct device"
+    assert x_device == device, "x not on correct device"
+    assert y_device == device, "y not on correct device"
+    assert u_device == device, "u not on correct device"
 
     # Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
