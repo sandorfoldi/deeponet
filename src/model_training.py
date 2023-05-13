@@ -45,8 +45,6 @@ def train_model(args):
 
     if (len(paths) == 0):
         raise Exception('No files found in dataset folder')
-
-    print(n_points)
     
     # Load dataset
     ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points)
@@ -99,8 +97,9 @@ def train_model(args):
         
             epoch_val_losses.append(np.mean(validation_losses))
         
-        print(f'Epoch {epoch+1}/{epochs}, train loss: {epoch_train_losses[-1]}, val loss: {epoch_val_losses[-1]}')
-
+        # print train and validation losses. Format 6 decimals
+        print(f'Epoch {epoch+1}/{epochs} - Train loss: {epoch_train_losses[-1]:.6f} - Validation loss: {epoch_val_losses[-1]:.6f}')
+        
 
     return model, epoch_train_losses, epoch_val_losses
 
@@ -118,7 +117,6 @@ if __name__ == '__main__':
     args = args.parse_args()
 
     root = os.getcwd()
-    # print(f'HEEEEEEEY: {root + args.dataset}')
 
     model, train_losses, val_losses = train_model(args)
 
