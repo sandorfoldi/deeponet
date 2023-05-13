@@ -85,7 +85,7 @@ class WaveDataset(torch.utils.data.Dataset):
 
 
 if __name__ == '__main__':
-    paths = glob('data/10/*.npy')
+    paths = glob('data/training/*.npy')
     ds_train, ds_valid = get_wave_datasets(paths)
     dl_train, dl_valid = torch.utils.data.DataLoader(ds_train, batch_size=32), torch.utils.data.DataLoader(ds_valid, batch_size=32)
     for x, y, u in dl_train:
