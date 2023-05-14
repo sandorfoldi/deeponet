@@ -5,6 +5,7 @@ from wave_loader import get_wave_datasets
 import numpy as np
 import os
 from glob import glob
+import wandb
 
 """
     Class used to train and save a DeepONet model:
@@ -14,6 +15,7 @@ from glob import glob
     Output:
     
 """
+
 
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):
@@ -32,12 +34,35 @@ def save_results(losses, root, foldername, filename):
 def train_model(args):
     dataset_path = args.dataset
     n_points = args.n_points
-
     model_name = args.model
     hidden_units = args.n_hidden
     epochs = args.epochs
     batch_size = args.batch_size
     lr = args.lr
+    run_name = args.run_name
+
+    # login to wandb
+    # api key is stored in private/wandb_api_key.txt
+    wandb.login(key=open('private/wandb_api_key.txt').read().strip())
+
+    # start a new wandb run to track this script
+    wandb.init(
+        entity="sandorfoldi",
+        # set the wandb project where this run will be logged
+        project="deeponet",
+        # name
+        name=run_name,
+        # track hyperparameters and run metadata
+        config={
+        "dataset_path": dataset_path,
+        "n_points": n_points,
+        "model_name": model_name,
+        "hidden_units": hidden_units,
+        "epochs": epochs,
+        "batch_size": batch_size,
+        "lr": lr,
+        }
+    )
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f'Device:\t{device}')
@@ -91,6 +116,7 @@ def train_model(args):
     print(f'Training {str(model)} for {epochs} epochs')
 
     for epoch in range(epochs):
+        # wandb.log({"epoch": epoch})
         # Training
         model.train()
         train_losses = []
@@ -104,9 +130,12 @@ def train_model(args):
             optimizer.step()
 
             train_losses.append(loss.item())
-        
+            wandb.log({"train_loss": loss.item(), "epoch": epoch})
+                
         epoch_train_losses.append(np.mean(train_losses))
+        wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
         lr_scheduler.step()
+
 
         # Validation
         model.eval()
@@ -119,6 +148,8 @@ def train_model(args):
                 validation_losses.append(loss.item())
         
             epoch_val_losses.append(np.mean(validation_losses))
+            wandb.log({"epoch_10k_val_loss": epoch_val_losses[-1], "epoch": epoch})
+            wandb.log({"epoch_10k_train_loss": epoch_train_losses[-1], "epoch": epoch})
         
         # print train and validation losses. Format 6 decimals
         print(f'Epoch {epoch+1}/{epochs} - Train loss: {epoch_train_losses[-1]:.6f} - Validation loss: {epoch_val_losses[-1]:.6f}')
@@ -137,6 +168,7 @@ if __name__ == '__main__':
     args.add_argument('--lr', type=float, default=1e-3)
     args.add_argument('--n_points', type=int, default=100)
     args.add_argument('--outputfolder', type=str, default='default')
+    args.add_argument('--run_name', type=str, default='default')
     args = args.parse_args()
 
     root = os.getcwd()

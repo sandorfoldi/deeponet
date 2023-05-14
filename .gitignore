@@ -6,10 +6,9 @@ data
 env
 logs
 models
-wandb
+results
 private
-
-
+wandb
 .DS_Store
 
 src/__pycache__
