@@ -39,6 +39,7 @@ def train_model(args):
     epochs = args.epochs
     batch_size = args.batch_size
     lr = args.lr
+    run_name = args.run_name
 
     # login to wandb
     # api key is stored in private/wandb_api_key.txt
@@ -46,10 +47,11 @@ def train_model(args):
 
     # start a new wandb run to track this script
     wandb.init(
+        entity="sandorfoldi",
         # set the wandb project where this run will be logged
         project="deeponet",
         # name
-        name="wandb_test",
+        name=run_name,
         # track hyperparameters and run metadata
         config={
         "dataset_path": dataset_path,
@@ -156,6 +158,7 @@ if __name__ == '__main__':
     args.add_argument('--lr', type=float, default=1e-3)
     args.add_argument('--n_points', type=int, default=100)
     args.add_argument('--outputfolder', type=str, default='default')
+    args.add_argument('--run_name', type=str, default='default')
     args = args.parse_args()
 
     root = os.getcwd()
