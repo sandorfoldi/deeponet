@@ -22,13 +22,17 @@ def generate_dataset():
     ap.add_argument("--x1", type=float, default=np.pi)
     ap.add_argument("--t1", type=float, default=100)
     ap.add_argument("--c", type=float, default=1)
+    ap.add_argument("--a_min", type=float, default=.1)
+    ap.add_argument("--a_max", type=float, default=1)
+    ap.add_argument("--b_min", type=float, default=-np.pi)
+    ap.add_argument("--b_max", type=float, default=np.pi)
     ap.add_argument("--n_fourier_components", type=int, default=-1)
     ap.add_argument("--sensor_type", type=str, default="sensor")
 
     args = ap.parse_args()
     
-    train_as = np.random.choice(np.linspace(0.1, 1, 100000), args.n_ic, replace=False)
-    train_bs = np.random.choice(np.linspace(-np.pi, np.pi, 100000), args.n_ic, replace=False)
+    train_as = np.random.choice(np.linspace(args.a_min, args.a_max, 100000), args.n_ic, replace=False)
+    train_bs = np.random.choice(np.linspace(args.b_min, args.b_max, 100000), args.n_ic, replace=False)
     sensors = np.linspace(-np.pi, np.pi, args.n_sensors)
 
     idxs = list(range(args.n_ic))
