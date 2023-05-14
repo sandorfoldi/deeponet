@@ -1,6 +1,6 @@
 import torch 
 import argparse
-from model import DeepONet, DeepONetCNN
+from model import DeepONet, DeepONet1DCNN, DeepONet2DCNN
 from wave_loader import get_wave_datasets
 import numpy as np
 import os
@@ -57,7 +57,13 @@ def train_model(args):
     validation_dataloader = torch.utils.data.DataLoader(ds_valid, batch_size=batch_size, shuffle=True)
 
     # Model
-    model = DeepONet(100, hidden_units, hidden_units) if model_name == 'FFNN' else DeepONetCNN(100, hidden_units, hidden_units) # Allow for CNN
+    model = DeepONet(100, hidden_units, hidden_units)
+
+    if model_name == 'CNN1D':
+        model = DeepONet1DCNN(100, hidden_units, hidden_units)
+    elif model_name == 'CNN2D':
+        model = DeepONet2DCNN(100, hidden_units, hidden_units)
+
     model.to(device)
 
     # asserting model and dataset devices
@@ -72,6 +78,9 @@ def train_model(args):
 
     # Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    
+    # lr scheduler
+    lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.997)
 
     # Loss function
     loss_fn = torch.nn.MSELoss()
@@ -97,6 +106,7 @@ def train_model(args):
             train_losses.append(loss.item())
         
         epoch_train_losses.append(np.mean(train_losses))
+        lr_scheduler.step()
 
         # Validation
         model.eval()
@@ -107,7 +117,6 @@ def train_model(args):
                 pred = model(u_batch, xt_batch)
                 loss = loss_fn(pred, y_batch.view(-1))
                 validation_losses.append(loss.item())
-
         
             epoch_val_losses.append(np.mean(validation_losses))
         

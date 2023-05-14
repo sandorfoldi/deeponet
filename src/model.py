@@ -34,7 +34,7 @@ class DeepONet1DCNN(torch.nn.Module):
         self.B2_pool = torch.nn.MaxPool1d(kernel_size=2, stride=2)
         self.B3_conv = torch.nn.Conv1d(16, 32, kernel_size=3, stride=1, padding=1)
         self.B3_pool = torch.nn.MaxPool1d(kernel_size=2, stride=2)
-        self.B4 = torch.nn.Linear(32, n_output)
+        self.B4 = torch.nn.Linear(384, n_output)
 
 
         # Trunk net
@@ -49,11 +49,11 @@ class DeepONet1DCNN(torch.nn.Module):
     def forward(self, u, y):
         # Pass through branch net
         # b = self.activation(self.B1_pool(self.B1_conv(u.view(-1, 1, 10, 10))))
-        b = self.activation(self.B1_pool(self.B1_conv(u)))
+        b = self.activation(self.B1_pool(self.B1_conv(u.unsqueeze(1))))
         b = self.activation(self.B2_pool(self.B2_conv(b)))
         b = self.activation(self.B3_pool(self.B3_conv(b)))
-        # b = self.B4(b.view(-1, 32))
-        b = self.B4(b)
+        b = self.B4(b.flatten(start_dim=1))
+        # b = self.B4(b)
 
 
         # Pass through trunk net
@@ -69,7 +69,7 @@ class DeepONet1DCNN(torch.nn.Module):
         return output
 
     def __repr__(self):
-        return 'DON_CNN_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
+        return 'DON_CNN1D_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
 
 class DeepONet2DCNN(torch.nn.Module):
     """
@@ -125,7 +125,7 @@ class DeepONet2DCNN(torch.nn.Module):
         return output
 
     def __repr__(self):
-        return 'DON_CNN_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
+        return 'DON_CNN2D_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
 
 # Neural network 
 class DeepONet(torch.nn.Module):
@@ -188,4 +188,4 @@ class DeepONet(torch.nn.Module):
         return output
     
     def __repr__(self):
-        return 'DON_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
+        return 'DON_Dense_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)

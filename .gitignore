@@ -6,6 +6,9 @@ data
 env
 logs
 models
+wandb
+private
+
 
 .DS_Store
 
