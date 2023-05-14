@@ -1,3 +1,4 @@
+#%%
 import shutil
 from typing import Callable, List, Tuple
 
@@ -9,6 +10,7 @@ from tqdm import tqdm
 import os
 import argparse
 
+#%%
 def generate_dataset():
 
     ap = argparse.ArgumentParser()
@@ -111,7 +113,156 @@ def sense_func(func: Callable, sensors: np.ndarray) -> np.ndarray:
 def ic_sin(a, b):
     return lambda x: np.sin(a * x + b)
 
-
+#%%
 if __name__ == "__main__":
     # generate_simulation()
     generate_dataset()
+
+
+#%%
+
+ic = ic_sin(1, 1)
+
+n_points = 1000
+n_components = 10
+x = np.linspace(-10*np.pi, 10*np.pi, n_points)
+y = ic(x)
+plt.plot(x, y)
+plt.show()
+
+fft = np.fft.fft(y)
+plt.plot(np.abs(fft))
+plt.show()
+
+# zero out all but the first n_components
+fft[n_components+1:-n_components] = 0
+
+# inverse fourier transform
+y_ = np.fft.ifft(fft)
+plt.plot(x, y, label='original')
+plt.plot(x, y_, label='reconstructed')
+
+plt.show()
+
+#%%
+def sense_fourier(func, points, num_components):
+    y = func(points)
+    fft = np.fft.fft(y)
+    fft[num_components+1:-num_components] = 0
+
+    fft0 = fft[:n_components+1]
+    fft1 = fft[-n_components-1:]
+    fft_ = np.concatenate((fft0, fft1))
+    return fft_
+
+ic = ic_sin(1, 1)
+
+n_points = 1000
+n_components = 10
+x = np.linspace(-10*np.pi, 10*np.pi, n_points)
+
+fft = sense_fourier(ic, x, n_components)
+print(fft.shape)
+print(fft)
+fft_recovered = np.zeros_like(x, dtype=np.complex128)
+fft_recovered[:n_components+1] = fft[:n_components+1]# fft0
+fft_recovered[-n_components-1:] = fft[-n_components-1:] # fft1
+
+y_ = np.fft.ifft(fft_recovered)
+plt.plot(x, y, label='original')
+plt.plot(x, y_, label='reconstructed')
+plt.legend()
+plt.show()
+
+
+#%%
+ic = ic_sin(1, 1)
+
+n_points = 1000
+n_components = 10
+x = np.linspace(-10*np.pi, 10*np.pi, n_points)
+y = ic(x)
+plt.plot(x, y)
+plt.show()
+
+fft = np.fft.fft(y)
+plt.plot(np.abs(fft))
+plt.show()
+
+# zero out all but the first n_components
+fft[n_components+1:-n_components] = 0
+fft0 = fft[:n_components+1]
+fft1 = fft[-n_components-1:]
+
+fft_ = np.concatenate((fft0, fft1))
+
+fft_recovered = np.zeros_like(fft)
+fft_recovered[:n_components+1] = fft_[:n_components+1]# fft0
+fft_recovered[-n_components-1:] = fft_[-n_components-1:] # fft1
+
+print(fft_recovered.shape)
+print(fft_recovered.dtype)
+# inverse fourier transform
+y_ = np.fft.ifft(fft_recovered)
+plt.plot(x, y, label='original')
+plt.plot(x, y_, label='reconstructed')
+
+plt.show()
+
+# %%
+
+#%%
+print(fft.shape)
+
+# %%
+
+ic = ic_sin(1, 2)
+
+n_points = 1000
+n_components = 20
+x = np.linspace(-10*np.pi, 10*np.pi, n_points)
+y = ic(x)
+plt.plot(x, y)
+plt.show()
+
+fft = np.fft.fft(y)
+plt.plot(np.abs(fft))
+plt.show()
+
+# zero out all but the first n_components
+fft[n_components:] = 0
+for i in range(n_components):
+    fft[-i] = fft[i]
+# inverse fourier transform
+y_ = np.fft.ifft(fft)
+plt.plot(x, y, label='original')
+plt.plot(x, y_, label='reconstructed')
+plt.show()
+
+# %%
+def sense_fourier(func: Callable, points, n_components) -> np.ndarray:
+    y = func(points)
+    fft = np.fft.fft(y)
+    return fft[:n_components]
+    return np.concatenate([fft[:n_components+1], fft[-n_components:]])
+#%%
+a = 1
+b = 1
+num_points = 10000
+num_components = 10
+
+ic = ic_sin(a, b)
+points = np.linspace(-np.pi, np.pi, num_points)
+t = ic(points)
+fft = sense_fourier(ic, points, num_components)
+
+_ = np.zeros(len(points))
+for i in range(num_components):
+    _[i] = fft[i]
+    _[-i] = fft[i]
+y = np.fft.ifft(_)
+plt.plot(points, t, label='true')
+plt.plot(points, y, label='reconstructed')
+plt.legend()
+plt.show()
+# %%
