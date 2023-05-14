@@ -1,5 +1,5 @@
 #!/bin/sh
-#BSUB -J BS_1024
+#BSUB -J F1000
 #BSUB -W 1:00
 #BSUB -q gpuv100
 #BSUB -R "rusage[mem=32GB]"
@@ -13,4 +13,4 @@ module load python3/3.9.11
 source env/bin/activate
 
 echo "Running script..."
-python src/model_training.py --dataset=data/f1000 --batch_size=2048 --run_name='f1000' --outputfolder='f1000'
+python src/model_training.py --dataset=data/f1000 --batch_size=2048 --run_name='f1000' --outputfolder='f1000' --epochs=1000 
