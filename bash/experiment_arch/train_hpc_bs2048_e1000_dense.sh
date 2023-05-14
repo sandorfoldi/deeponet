@@ -1,5 +1,5 @@
 #!/bin/sh
-#BSUB -J BS_64
+#BSUB -J BS_Dense
 #BSUB -W 1:00
 #BSUB -q gpuv100
 #BSUB -R "rusage[mem=32GB]"
@@ -13,4 +13,4 @@ module load python3/3.9.11
 source env/bin/activate
 
 echo "Running script..."
-python src/model_training.py --dataset data/1000 --epochs 1000 --batch_size 2048 --outputfolder Dense_Train1000
+python src/model_training.py --dataset data/1000 --epochs 1000 --batch_size 2048 --outputfolder Dense --run_name Dense
