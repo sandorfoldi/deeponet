@@ -7,7 +7,8 @@ env
 logs
 models
 results
-
+private
+wandb
 .DS_Store
 
 src/__pycache__
