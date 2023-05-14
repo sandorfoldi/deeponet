@@ -23,6 +23,8 @@ def generate_dataset():
     ap.add_argument("--x1", type=float, default=np.pi)
     ap.add_argument("--t1", type=float, default=100)
     ap.add_argument("--c", type=float, default=1)
+    ap.add_argument("--n_fourier_components", type=int, default=-1)
+    ap.add_argument("--sensor_type", type=str, default="sensor")
 
     args = ap.parse_args()
     
@@ -51,16 +53,23 @@ def generate_dataset():
             t1=args.t1,
             n_t=args.n_t,
             n_x=args.n_x,
-            c=args.c
+            c=args.c,
+            sensor_type=args.sensor_type,
+            f_fourier_components=args.n_fourier_components,
             )
 
 
-def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c):
+def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c, n_fourier_components=-1, sensor_type='sensor'):
     y, x, t = gen_wave_data_ivp(
         c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
     )
-
-    u = sense_func(ic_func, sensors)
+    assert not (n_fourier_components == -1 and sensor_type == 'fourier'), 'n_fourier_components must be specified for fourier sensor'
+    if sensor_type == 'sensor':
+        u = sense_func(ic_func, sensors)
+    elif sensor_type == 'fourier':
+        u = sense_fourier(ic_func, sensors, 10)
+    else:
+        raise NotImplementedError(f'{sensor_type} not implemented')
     data = np.array(
         [(x, t, y, u)],
         dtype=[
@@ -109,6 +118,17 @@ def gen_wave_data_ivp(
 def sense_func(func: Callable, sensors: np.ndarray) -> np.ndarray:
     return func(sensors)
 
+def sense_fourier(func, points, num_components):
+    y = func(points)
+    fft = np.fft.fft(y)
+    fft[num_components+1:-num_components] = 0
+
+    fft0 = fft[:n_components+1]
+    fft1 = fft[-n_components-1:]
+    fft_ = np.concatenate((fft0, fft1))
+    fft_ = np.array([[i.real, i.imag] for i in fft_])
+    fft_ = fft_.reshape(-1)
+    return fft_
 
 def ic_sin(a, b):
     return lambda x: np.sin(a * x + b)
@@ -118,6 +138,12 @@ if __name__ == "__main__":
     # generate_simulation()
     generate_dataset()
 
+
+#%%
+ic = ic_sin(1, 1)
+
+sensed = sense_func(ic, np.linspace(-np.pi, np.pi, 100))
+sensed.shape
 
 #%%
 
@@ -153,6 +179,8 @@ def sense_fourier(func, points, num_components):
     fft0 = fft[:n_components+1]
     fft1 = fft[-n_components-1:]
     fft_ = np.concatenate((fft0, fft1))
+    fft_ = np.array([[i.real, i.imag] for i in fft_])
+    fft_ = fft_.reshape(-1)
     return fft_
 
 ic = ic_sin(1, 1)
