@@ -40,6 +40,12 @@ def generate_dataset():
         else:
             exit(0)
     os.makedirs(args.root, exist_ok=False)
+    if args.sensor_type == 'fourier':
+        assert args.n_fourier_components % 4 == 0, 'n_fourier_components must be divisible by 4 (trunc in start and end, and complex conjugate)'
+        print('[WARNING]: n_fourier_components is divided by 2 and subtracted by 2.')
+        args.n_fourier_components = args.n_fourier_components/4 - 1
+        print(f'[INFO]: n_fourier_components: {args.n_fourier_components}')
+        args.n_fourier_components = int(args.n_fourier_components)
 
     for a, b, i in tqdm(zip(train_as, train_bs, idxs)):
         generate_simulation(
@@ -54,7 +60,7 @@ def generate_dataset():
             n_x=args.n_x,
             c=args.c,
             sensor_type=args.sensor_type,
-            f_fourier_components=args.n_fourier_components,
+            n_fourier_components=args.n_fourier_components,
             )
 
 
@@ -66,7 +72,7 @@ def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c, n_fo
     if sensor_type == 'sensor':
         u = sense_func(ic_func, sensors)
     elif sensor_type == 'fourier':
-        u = sense_fourier(ic_func, sensors, 10)
+        u = sense_fourier(ic_func, sensors, n_fourier_components)
     else:
         raise NotImplementedError(f'{sensor_type} not implemented')
     data = np.array(
