@@ -107,7 +107,7 @@ def train_model(args):
     print(f'Training {str(model)} for {epochs} epochs')
 
     for epoch in range(epochs):
-        wandb.log({"epoch": epoch})
+        # wandb.log({"epoch": epoch})
         # Training
         model.train()
         train_losses = []
@@ -121,10 +121,10 @@ def train_model(args):
             optimizer.step()
 
             train_losses.append(loss.item())
-            wandb.log({"train_loss": loss.item()})
+            wandb.log({"train_loss": loss.item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
-        wandb.log({"epoch_train_loss": epoch_train_losses[-1]})
+        wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
 
 
         # Validation
@@ -139,7 +139,8 @@ def train_model(args):
 
         
             epoch_val_losses.append(np.mean(validation_losses))
-            wandb.log({"epoch_val_loss": epoch_val_losses[-1]})
+            wandb.log({"epoch_10k_val_loss": epoch_val_losses[-1], "epoch": epoch})
+            wandb.log({"epoch_10k_train_loss": epoch_train_losses[-1], "epoch": epoch})
         
         # print train and validation losses. Format 6 decimals
         print(f'Epoch {epoch+1}/{epochs} - Train loss: {epoch_train_losses[-1]:.6f} - Validation loss: {epoch_val_losses[-1]:.6f}')
