@@ -26,12 +26,12 @@ def generate_dataset():
     ap.add_argument("--mode", type=str, default="bvp")
     ap.add_argument("--root", type=str, default="data/default")
     ap.add_argument("--n_ic", type=int, default=1000)
+    ap.add_argument("--d_t", type=float, default=0.1)
     ap.add_argument("--n_t", type=int, default=100)
-    ap.add_argument("--d_x", type=int, default=0.1)
+    ap.add_argument("--d_x", type=float, default=0.1)
     ap.add_argument("--n_sensors", type=int, default=100)
     ap.add_argument("--x0", type=float, default=-np.pi)
     ap.add_argument("--x1", type=float, default=np.pi)
-    ap.add_argument("--t1", type=float, default=100)
     ap.add_argument("--c", type=float, default=1)
     ap.add_argument("--a_min", type=float, default=.1)
     ap.add_argument("--a_max", type=float, default=1)
@@ -43,13 +43,13 @@ def generate_dataset():
 
     args = ap.parse_args()
     args.n_x = int((args.x1 - args.x0) / args.d_x)
-    
+    args.t1 = args.n_t * args.d_t
+
     train_as = np.linspace(args.a_min, args.a_max, args.n_ic)
     train_bs = np.linspace(args.b_min, args.b_max, args.n_ic)
     sensors = np.linspace(args.x0, args.x1, args.n_sensors)
 
     idxs = list(range(args.n_ic))
-
     if os.path.exists(args.root):
         r = input(f'{args.root} exists, delete? (y/n)\n')
         if r == 'y':
@@ -74,8 +74,8 @@ def generate_dataset():
             sensors=sensors,
             x0=args.x0,
             x1=args.x1,
-            t1=args.t1,
             n_t=args.n_t,
+            t1=args.t1,
             n_x=args.n_x,
             c=args.c,
             sensor_type=args.sensor_type,
@@ -123,8 +123,8 @@ def gen_wave_data_ivp(
     :param x0: left boundary
     :param x1: right boundary
     :param t1: end time
-    :param dt: time step
-    :param dx: space step
+    :param n_t: num time steps
+    :param n_x: num space steps
     :param ic: initial condition
 
     :return: u: solutiom
@@ -156,8 +156,8 @@ def gen_wave_data_bvp(
     :param x0: left boundary
     :param x1: right boundary
     :param t1: end time
-    :param dt: time step
-    :param dx: space step
+    :param n_t: num time steps
+    :param n_x: num space steps
     :param ic: initial condition
 
     :return: u: solutiom
