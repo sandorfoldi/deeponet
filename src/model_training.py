@@ -165,7 +165,7 @@ if __name__ == '__main__':
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)
     args.add_argument('--batch_size', type=int, default=100)
-    args.add_argument('--lr', type=float, default=1e-3)
+    args.add_argument('--lr', type=float, default=1e-3) 
     args.add_argument('--n_points', type=int, default=100)
     args.add_argument('--outputfolder', type=str, default='default')
     args.add_argument('--run_name', type=str, default='default')

@@ -41,7 +41,7 @@ def viz_static(u: np.ndarray, x: np.ndarray, t: np.ndarray) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="data/0.npy")
+    parser.add_argument("--data", type=str, default="data/default/0.npy")
     parser.add_argument("--mode", type=str, default="static")
     args = parser.parse_args()
     data = np.load(args.data, allow_pickle=True)

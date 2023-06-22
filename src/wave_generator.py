@@ -9,14 +9,25 @@ from tqdm import tqdm
 import os
 import argparse
 
+def ic_sin(a, b):
+    return lambda x: np.sin(a * x + b)
+
+def ic_gm(mm, vv):
+    return lambda x: sum([1/np.sqrt(2*np.pi*v)*np.exp(-(x-m)**2/(2*v)) for m in mm for v in vv])
+
+ic_dict = {
+    "sin": lambda a, b: ic_sin(a, b),
+}
+
 
 def generate_dataset():
 
     ap = argparse.ArgumentParser()
+    ap.add_argument("--mode", type=str, default="bvp")
     ap.add_argument("--root", type=str, default="data/default")
     ap.add_argument("--n_ic", type=int, default=1000)
     ap.add_argument("--n_t", type=int, default=100)
-    ap.add_argument("--n_x", type=int, default=100)
+    ap.add_argument("--d_x", type=int, default=0.1)
     ap.add_argument("--n_sensors", type=int, default=100)
     ap.add_argument("--x0", type=float, default=-np.pi)
     ap.add_argument("--x1", type=float, default=np.pi)
@@ -28,12 +39,14 @@ def generate_dataset():
     ap.add_argument("--b_max", type=float, default=np.pi)
     ap.add_argument("--n_fourier_components", type=int, default=-1)
     ap.add_argument("--sensor_type", type=str, default="sensor")
+    ap.add_argument("--ic", type=str, default="sin")
 
     args = ap.parse_args()
+    args.n_x = int((args.x1 - args.x0) / args.d_x)
     
     train_as = np.random.choice(np.linspace(args.a_min, args.a_max, 100000), args.n_ic, replace=False)
     train_bs = np.random.choice(np.linspace(args.b_min, args.b_max, 100000), args.n_ic, replace=False)
-    sensors = np.linspace(-np.pi, np.pi, args.n_sensors)
+    sensors = np.linspace(args.x0, args.x1, args.n_sensors)
 
     idxs = list(range(args.n_ic))
 
@@ -51,8 +64,10 @@ def generate_dataset():
         print(f'[INFO]: n_fourier_components: {args.n_fourier_components}')
         args.n_fourier_components = int(args.n_fourier_components)
 
+
     for a, b, i in tqdm(zip(train_as, train_bs, idxs)):
         generate_simulation(
+            mode=args.mode,
             root=args.root,
             i=i, 
             ic_func=ic_sin(a, b), 
@@ -68,10 +83,18 @@ def generate_dataset():
             )
 
 
-def generate_simulation(root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c, n_fourier_components=-1, sensor_type='sensor'):
-    y, x, t = gen_wave_data_ivp(
-        c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
-    )
+def generate_simulation(mode, root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c, n_fourier_components=-1, sensor_type='sensor'):
+    if mode == 'ivp':
+        y, x, t = gen_wave_data_ivp(
+            c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
+        )
+    elif mode == 'bvp':
+        y, x, t = gen_wave_data_bvp(
+            c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
+        )
+    else:
+        raise NotImplementedError(f'{mode} not implemented')
+
     assert not (n_fourier_components == -1 and sensor_type == 'fourier'), 'n_fourier_components must be specified for fourier sensor'
     if sensor_type == 'sensor':
         u = sense_func(ic_func, sensors)
@@ -124,6 +147,41 @@ def gen_wave_data_ivp(
     return u, x, t
 
 
+def gen_wave_data_bvp(
+    c: float, x0: float, x1: float, t1: float, n_t: float, n_x: float, ic: Callable,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generate wave data using the wave equation
+    :param c: wave speed
+    :param x0: left boundary
+    :param x1: right boundary
+    :param t1: end time
+    :param dt: time step
+    :param dx: space step
+    :param ic: initial condition
+
+    :return: u: solutiom
+    :return: x: space
+    :return: t: time
+    """
+    x = np.linspace(x0, x1, n_x)
+    t = np.linspace(0, t1, n_t)
+    u0 = ic(x)
+    v0 = np.zeros(len(x))
+    y0 = np.concatenate((u0, v0))
+
+    def wave_equation(t, y, c):
+        u, v = np.split(y, 2)
+        d2udx2 = np.gradient(np.gradient(u))
+        v[0] = 0
+        v[-1] = 0
+        return np.concatenate((v, c**2 * d2udx2))
+
+    sol = solve_ivp(lambda t, y: wave_equation(t, y, c), [0, t1], y0, t_eval=t)
+    u, v = np.split(sol.y, 2)
+    return u, x, t
+
+
 def sense_func(func: Callable, sensors: np.ndarray) -> np.ndarray:
     return func(sensors)
 
@@ -139,8 +197,6 @@ def sense_fourier(func, points, num_components):
     fft_ = fft_.reshape(-1)
     return fft_
 
-def ic_sin(a, b):
-    return lambda x: np.sin(a * x + b)
 
 
 if __name__ == "__main__":
