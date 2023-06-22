@@ -9,15 +9,9 @@ from tqdm import tqdm
 import os
 import argparse
 
-def ic_sin(a, b):
-    return lambda x: np.sin(a * x + b)
 
 def ic_gm(mm, vv):
     return lambda x: sum([1/np.sqrt(2*np.pi*v)*np.exp(-(x-m)**2/(2*v)) for m in mm for v in vv])
-
-ic_dict = {
-    "sin": lambda a, b: ic_sin(a, b),
-}
 
 
 def generate_dataset():
@@ -25,18 +19,21 @@ def generate_dataset():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", type=str, default="bvp")
     ap.add_argument("--root", type=str, default="data/default")
-    ap.add_argument("--n_ic", type=int, default=1000)
+    ap.add_argument("--n_ic", type=int, default=1)
     ap.add_argument("--d_t", type=float, default=0.1)
-    ap.add_argument("--n_t", type=int, default=100)
+    ap.add_argument("--n_t", type=int, default=500)
     ap.add_argument("--d_x", type=float, default=0.1)
     ap.add_argument("--n_sensors", type=int, default=100)
-    ap.add_argument("--x0", type=float, default=-np.pi)
-    ap.add_argument("--x1", type=float, default=np.pi)
-    ap.add_argument("--c", type=float, default=1)
-    ap.add_argument("--a_min", type=float, default=.1)
-    ap.add_argument("--a_max", type=float, default=1)
-    ap.add_argument("--b_min", type=float, default=-np.pi)
-    ap.add_argument("--b_max", type=float, default=np.pi)
+    ap.add_argument("--x0", type=float, default=0)
+    ap.add_argument("--x1", type=float, default=10)
+    ap.add_argument("--c", type=float, default=5)
+
+    ap.add_argument("--m_min", type=float, default=5)
+    ap.add_argument("--m_max", type=float, default=5)
+    ap.add_argument("--v_min", type=float, default=1)
+    ap.add_argument("--v_max", type=float, default=1)
+    ap.add_argument("--num_g", type=int, default=1)
+
     ap.add_argument("--n_fourier_components", type=int, default=-1)
     ap.add_argument("--sensor_type", type=str, default="sensor")
     ap.add_argument("--ic", type=str, default="sin")
@@ -45,8 +42,6 @@ def generate_dataset():
     args.n_x = int((args.x1 - args.x0) / args.d_x)
     args.t1 = args.n_t * args.d_t
 
-    train_as = np.linspace(args.a_min, args.a_max, args.n_ic)
-    train_bs = np.linspace(args.b_min, args.b_max, args.n_ic)
     sensors = np.linspace(args.x0, args.x1, args.n_sensors)
 
     idxs = list(range(args.n_ic))
@@ -65,12 +60,15 @@ def generate_dataset():
         args.n_fourier_components = int(args.n_fourier_components)
 
 
-    for a, b, i in tqdm(zip(train_as, train_bs, idxs)):
+    for i in tqdm(idxs):
+        m = [np.random.random()*(args.m_max-args.m_min) + args.m_min for _ in range(args.num_g)]
+        v = [np.random.random()*(args.v_max-args.v_min) + args.v_min for _ in range(args.num_g)]
+
         generate_simulation(
             mode=args.mode,
             root=args.root,
             i=i, 
-            ic_func=ic_sin(a, b), 
+            ic_func=ic_gm(m, v), 
             sensors=sensors,
             x0=args.x0,
             x1=args.x1,
@@ -84,11 +82,7 @@ def generate_dataset():
 
 
 def generate_simulation(mode, root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c, n_fourier_components=-1, sensor_type='sensor'):
-    if mode == 'ivp':
-        y, x, t = gen_wave_data_ivp(
-            c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
-        )
-    elif mode == 'bvp':
+    if mode == 'bvp':
         y, x, t = gen_wave_data_bvp(
             c=c, x0=x0, x1=x1, t1=t1, n_t=n_t, n_x=n_x, ic=ic_func
         )
@@ -113,40 +107,6 @@ def generate_simulation(mode, root, i, ic_func, sensors, x0, x1, t1, n_t, n_x, c
     )
     np.save(f"{os.path.join(root, str(i))}.npy", data)
 
-
-def gen_wave_data_ivp(
-    c: float, x0: float, x1: float, t1: float, n_t: float, n_x: float, ic: Callable
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Generate wave data using the wave equation
-    :param c: wave speed
-    :param x0: left boundary
-    :param x1: right boundary
-    :param t1: end time
-    :param n_t: num time steps
-    :param n_x: num space steps
-    :param ic: initial condition
-
-    :return: u: solutiom
-    :return: x: space
-    :return: t: time
-    """
-    x = np.linspace(x0, x1, n_x)
-    t = np.linspace(0, t1, n_t)
-    u0 = ic(x)
-    v0 = np.zeros(len(x))
-    y0 = np.concatenate((u0, v0))
-
-    def wave_equation(t, y, c):
-        u, v = np.split(y, 2)
-        d2udx2 = np.gradient(np.gradient(u))
-        return np.concatenate((v, c**2 * d2udx2))
-
-    sol = solve_ivp(lambda t, y: wave_equation(t, y, c), [0, t1], y0, t_eval=t)
-    u, v = np.split(sol.y, 2)
-    return u, x, t
-
-
 def gen_wave_data_bvp(
     c: float, x0: float, x1: float, t1: float, n_t: float, n_x: float, ic: Callable,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -167,7 +127,8 @@ def gen_wave_data_bvp(
     x = np.linspace(x0, x1, n_x)
     t = np.linspace(0, t1, n_t)
     u0 = ic(x)
-    v0 = ic(x+1e-2)
+    v0 = np.zeros_like(x)
+    # v0 = ic(x+1e-2)
     y0 = np.concatenate((u0, v0))
 
     def wave_equation(t, y, c):

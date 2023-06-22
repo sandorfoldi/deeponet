@@ -26,8 +26,11 @@ def viz_static(u: np.ndarray, x: np.ndarray, t: np.ndarray) -> None:
     """
     Visualize the wave data using animation
     """
+    # u = u.T
+    # assert u.shape == (len(t) - 1, len(x) - 1)
     xx, tt = np.meshgrid(x, t)
     fig, ax = plt.subplots()
+    print(x.shape, t.shape, u.shape)
     ax.pcolormesh(xx, tt, u, shading="auto")
     ax.set_xlabel("x")
     ax.set_ylabel("t")
@@ -42,7 +45,7 @@ def viz_static(u: np.ndarray, x: np.ndarray, t: np.ndarray) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, default="data/default/0.npy")
-    parser.add_argument("--mode", type=str, default="static")
+    parser.add_argument("--mode", type=str, default="animate")
     args = parser.parse_args()
     data = np.load(args.data, allow_pickle=True)
     x, t, y, u = data[0]

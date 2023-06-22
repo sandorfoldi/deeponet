@@ -4,4 +4,4 @@
 source env/bin/activate
 
 # Generate data
-python3 src/wave_generator.py --root data/a --mode bvp --n_ic 1000 --n_sensors 10  --d_t 0.1 --n_t 100 --x0 0 --x1 1 --d_x 0.1 
+python3 src/wave_generator_gm.py --root data/a --mode bvp --n_ic 1 --n_sensors 1  --d_t 0.1 --n_t 100 --x0 0 --x1 3.14 --d_x 0.001 --c 1
