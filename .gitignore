@@ -11,3 +11,5 @@ wandb
 .DS_Store
 
 src/__pycache__
+
+**.npy
