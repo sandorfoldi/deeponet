@@ -139,17 +139,15 @@ def train_model(args):
 
         # Validation
         model.eval()
-        if epoch % 10 == 0:
-            validation_losses = []
-            model.eval()
-            for (xt_batch, y_batch, u_batch) in validation_dataloader:
-                pred = model(u_batch, xt_batch)
-                loss = loss_fn(pred, y_batch.view(-1))
-                validation_losses.append(loss.item())
-        
-            epoch_val_losses.append(np.mean(validation_losses))
-            wandb.log({"epoch_10k_val_loss": epoch_val_losses[-1], "epoch": epoch})
-            wandb.log({"epoch_10k_train_loss": epoch_train_losses[-1], "epoch": epoch})
+        validation_losses = []
+        model.eval()
+        for (xt_batch, y_batch, u_batch) in validation_dataloader:
+            pred = model(u_batch, xt_batch)
+            loss = loss_fn(pred, y_batch.view(-1))
+            validation_losses.append(loss.item())
+    
+        epoch_val_losses.append(np.mean(validation_losses))
+        wandb.log({"epoch_valid_loss": epoch_val_losses[-1], "epoch": epoch})
         
         # print train and validation losses. Format 6 decimals
         print(f'Epoch {epoch+1}/{epochs} - Train loss: {epoch_train_losses[-1]:.6f} - Validation loss: {epoch_val_losses[-1]:.6f}')
@@ -164,9 +162,9 @@ if __name__ == '__main__':
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)
-    args.add_argument('--batch_size', type=int, default=100)
+    args.add_argument('--batch_size', type=int, default=32)
     args.add_argument('--lr', type=float, default=1e-3) 
-    args.add_argument('--n_points', type=int, default=100)
+    args.add_argument('--n_points', type=int, default=128)
     args.add_argument('--outputfolder', type=str, default='default')
     args.add_argument('--run_name', type=str, default='default')
     args = args.parse_args()
