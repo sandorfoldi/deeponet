@@ -10,8 +10,8 @@ import os
 import argparse
 
 
-def ic_gm(mm, vv):
-    return lambda x: sum([1/np.sqrt(2*np.pi*v)*np.exp(-(x-m)**2/(2*v)) for m in mm for v in vv])
+def ic_fourier(a, b, P):
+    return lambda x: sum([a[n] * np.cos(np.pi * n * x / P) for n in range(len(a))]) + sum([b[n] * np.sin(np.pi * n * x / P) for n in range(len(b))]) - sum(a)
 
 
 def generate_dataset():
@@ -19,20 +19,20 @@ def generate_dataset():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", type=str, default="bvp")
     ap.add_argument("--root", type=str, default="data/default")
-    ap.add_argument("--n_ic", type=int, default=1000)
+    ap.add_argument("--n_ic", type=int, default=10)
     ap.add_argument("--d_t", type=float, default=0.1)
     ap.add_argument("--n_t", type=int, default=500)
     ap.add_argument("--d_x", type=float, default=0.1)
     ap.add_argument("--n_sensors", type=int, default=100)
     ap.add_argument("--x0", type=float, default=0)
-    ap.add_argument("--x1", type=float, default=100)
+    ap.add_argument("--x1", type=float, default=10)
     ap.add_argument("--c", type=float, default=5)
 
-    ap.add_argument("--m_min", type=float, default=10)
-    ap.add_argument("--m_max", type=float, default=90)
-    ap.add_argument("--v_min", type=float, default=10)
-    ap.add_argument("--v_max", type=float, default=10)
-    ap.add_argument("--num_g", type=int, default=1)
+    ap.add_argument("--num_f", type=int, default=10)
+    ap.add_argument("--a_min", type=float, default=5)
+    ap.add_argument("--a_max", type=float, default=5)
+    ap.add_argument("--b_min", type=float, default=2)
+    ap.add_argument("--b_max", type=float, default=2)
 
     ap.add_argument("--n_fourier_components", type=int, default=-1)
     ap.add_argument("--sensor_type", type=str, default="sensor")
@@ -61,14 +61,15 @@ def generate_dataset():
 
 
     for i in tqdm(idxs):
-        m = [np.random.random()*(args.m_max-args.m_min) + args.m_min for _ in range(args.num_g)]
-        v = [np.random.random()*(args.v_max-args.v_min) + args.v_min for _ in range(args.num_g)]
+        a = np.random.random(args.num_f) * (args.a_max - args.a_min) + args.a_min
+        b = np.random.random(args.num_f) * (args.b_max - args.b_min) + args.b_min
+        P = args.x1 - args.x0
 
         generate_simulation(
             mode=args.mode,
             root=args.root,
             i=i, 
-            ic_func=ic_gm(m, v), 
+            ic_func=ic_fourier(a, b, P/2.), 
             sensors=sensors,
             x0=args.x0,
             x1=args.x1,
@@ -158,8 +159,18 @@ def sense_fourier(func, points, num_components):
     fft_ = fft_.reshape(-1)
     return fft_
 
+def ic_fourier(a, b, P):
+    def ic(x):
+        y = np.zeros_like(x)
+        for i in range(len(a)):
+            y += a[i] * np.cos(2*np.pi*(i+1)*x/P) + b[i] * np.sin(2*np.pi*(i+1)*x/P)
+        return y
+    return ic
+
 
 
 if __name__ == "__main__":
     # generate_simulation()
     generate_dataset()
+
+
