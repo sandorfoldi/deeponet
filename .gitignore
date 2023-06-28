@@ -11,5 +11,6 @@ wandb
 .DS_Store
 
 src/__pycache__
+deeponet.egg-info
 
 **.npy
