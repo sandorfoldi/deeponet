@@ -1,0 +1,13 @@
+python src/wave_generator_27.06.py \
+    --root data/exp_1 \
+    --x0 0 \
+    --x1 100 \
+    --dx 0.1 \
+    --dt 0.1 \
+    --nt 100 \
+    --icf src.icf.polynomial \
+    --fdim 3 \
+    --fmin 0 \
+    --fmax 3 \
+    --fn 4 \
+    --c 1
