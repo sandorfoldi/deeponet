@@ -68,10 +68,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.mode == "animate":
         data = np.load(args.data, allow_pickle=True)
-        viz_animate(data[0][2], data[0][0], data[0][1])
+        x, t, y, u = data[0]
+        viz_animate(y, x, t)
     elif args.mode == "static":
         data = np.load(args.data, allow_pickle=True)
-        viz_static(data[0][2], data[0][0], data[0][1])
+        x, t, y, u = data[0]
+        viz_static(y, x, t)
     elif args.mode == "static_16":
         data_paths = glob(os.path.join(args.data, '*.npy'))
         datas = [np.load(data_paths[i], allow_pickle=True) for i in range(16)]
