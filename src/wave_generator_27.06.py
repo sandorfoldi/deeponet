@@ -112,6 +112,9 @@ def main(args):
             shutil.rmtree(args.root)
             os.mkdir(args.root)
             os.mkdir(simdir)
+        else:
+            print("Aborting...")
+            exit()
     metadata_csv = []
     paths_csv = []
     # metadata table columns:
