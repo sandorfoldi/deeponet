@@ -1,0 +1,13 @@
+python src/wave_generator_27.06.py \
+    --root data/b \
+    --x0 0 \
+    --x1 3.14 \
+    --dx 0.01 \
+    --dt 1 \
+    --nt 200 \
+    --icf src.icf.fourier \
+    --fdim 5 \
+    --fmin 0 \
+    --fmax 1 \
+    --fn 5 \
+    --c 1
