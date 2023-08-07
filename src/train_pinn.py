@@ -113,6 +113,8 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
+    loss_col = loss_col_fac(src.wave_generator_gm.wave_equation, torch.nn.MSELoss())
+
     print(f'Training {str(model)} for {epochs} epochs')
 
     for epoch in range(epochs):
@@ -125,7 +127,10 @@ def train_model(args):
             optimizer.zero_grad()
             # Forward pass through network
             pred = model(u_batch, xt_batch)
-            loss = loss_fn(pred, y_batch.view(-1))
+
+            loss_boundary = loss_fn(pred, y_batch.view(-1))
+            loss_collocation = loss_col(model, u_batch, xt_batch, y_batch)
+            loss = loss_boundary + loss_collocation
             loss.backward()
             optimizer.step()
 
@@ -137,13 +142,13 @@ def train_model(args):
         lr_scheduler.step()
 
 
+
         # Validation
         model.eval()
         validation_losses = []
         model.eval()
         for (xt_batch, y_batch, u_batch) in validation_dataloader:
-            pred = model(u_batch, xt_batch)
-            loss = loss_fn(pred, y_batch.view(-1))
+
             validation_losses.append(loss.item())
     
         epoch_val_losses.append(np.mean(validation_losses))
@@ -154,6 +159,15 @@ def train_model(args):
         
 
     return model, epoch_train_losses, epoch_val_losses
+
+
+def loss_col_fac(rhs, loss=torch.nn.MSELoss()):
+    def loss_col(net, u, xt, y):
+        preds = net(u, xt)
+        dpreds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        dtarget = rhs(xt[:, 0], y, xt[:, 1])
+        return loss(dtarget, dpreds[:, 0])
+    return loss_col
 
 
 if __name__ == '__main__':

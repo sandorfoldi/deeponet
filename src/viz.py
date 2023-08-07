@@ -38,7 +38,7 @@ def viz_static(u: np.ndarray, x: np.ndarray, t: np.ndarray) -> None:
     # colorbar
     cbar = fig.colorbar(ax.pcolormesh(xx, tt, u, shading="auto"))
     cbar.set_label("u")
-    plt.show()
+    plt.savefig('figs/tmp.png')
     return None
 
 def viz_static_16(us, xs, ts) -> None:

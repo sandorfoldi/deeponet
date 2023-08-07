@@ -14,6 +14,14 @@ def ic_gm(mm, vv):
     return lambda x: sum([1/np.sqrt(2*np.pi*v)*np.exp(-(x-m)**2/(2*v)) for m in mm for v in vv])
 
 
+def wave_equation(t, y, c):
+    u, v = np.split(y, 2)
+    d2udx2 = np.gradient(np.gradient(u))
+    v[0] = 0
+    v[-1] = 0
+    return np.concatenate((v, c**2 * d2udx2))
+
+
 def generate_dataset():
 
     ap = argparse.ArgumentParser()
@@ -131,12 +139,7 @@ def gen_wave_data_bvp(
     # v0 = ic(x+1e-2)
     y0 = np.concatenate((u0, v0))
 
-    def wave_equation(t, y, c):
-        u, v = np.split(y, 2)
-        d2udx2 = np.gradient(np.gradient(u))
-        v[0] = 0
-        v[-1] = 0
-        return np.concatenate((v, c**2 * d2udx2))
+
 
     sol = solve_ivp(lambda t, y: wave_equation(t, y, c), [0, t1], y0, t_eval=t)
     u, v = np.split(sol.y, 2)

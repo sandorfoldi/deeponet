@@ -113,7 +113,20 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
+    loss_col = loss_col_fac(src.wave_generator_gm.wave_equation, torch.nn.MSELoss())
+
     print(f'Training {str(model)} for {epochs} epochs')
+    
+    # initialize softadapt coefficients
+    a_boundary = .5
+    a_collocation = .5
+
+    s_boundary = 0
+    s_collocation = 0
+    l_boundary_hist = [0, 0,]
+    l_collocation_hist = [0, 0]
+    beta = args.beta
+    epsilon = 1e-8
 
     for epoch in range(epochs):
         # wandb.log({"epoch": epoch})
@@ -122,14 +135,31 @@ def train_model(args):
         train_losses = []
 
         for (xt_batch, y_batch, u_batch) in train_dataloader:
+            # update softadapt coefficients
+            s_boundary = l_boundary_hist[-1] - l_boundary_hist[-2]
+            s_collocation = l_collocation_hist[-1] - l_collocation_hist[-2]
+            
+            #TODO: check if this is correct
+            a_boundary = torch.exp(beta*s_boundary) / (torch.exp(beta*s_boundary) + torch.exp(beta*s_collocation) + epsilon)
+            a_collocation = torch.exp(beta*s_collocation) / (torch.exp(beta*s_boundary) + torch.exp(beta*s_collocation) + epsilon)
+            
+            # zero the parameter gradients
             optimizer.zero_grad()
             # Forward pass through network
             pred = model(u_batch, xt_batch)
-            loss = loss_fn(pred, y_batch.view(-1))
+
+            loss_boundary = loss_fn(pred, y_batch.view(-1))
+            loss_collocation = loss_col(model, u_batch, xt_batch, y_batch)
+            loss = a_boundary * loss_boundary + a_collocation * loss_collocation
             loss.backward()
             optimizer.step()
 
             train_losses.append(loss.item())
+            l_boundary_hist[-2] = l_boundary_hist[-1]
+            l_collocation_hist[-2] = l_collocation_hist[-1]
+            l_boundary_hist[-1] = loss_boundary.item()
+            l_collocation_hist[-1] = loss_collocation.item()
+
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
@@ -137,13 +167,13 @@ def train_model(args):
         lr_scheduler.step()
 
 
+
         # Validation
         model.eval()
         validation_losses = []
         model.eval()
         for (xt_batch, y_batch, u_batch) in validation_dataloader:
-            pred = model(u_batch, xt_batch)
-            loss = loss_fn(pred, y_batch.view(-1))
+
             validation_losses.append(loss.item())
     
         epoch_val_losses.append(np.mean(validation_losses))
@@ -154,6 +184,15 @@ def train_model(args):
         
 
     return model, epoch_train_losses, epoch_val_losses
+
+
+def loss_col_fac(rhs, loss=torch.nn.MSELoss()):
+    def loss_col(net, u, xt, y):
+        preds = net(u, xt)
+        dpreds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        dtarget = rhs(xt[:, 0], y, xt[:, 1])
+        return loss(dtarget, dpreds[:, 0])
+    return loss_col
 
 
 if __name__ == '__main__':
@@ -167,6 +206,7 @@ if __name__ == '__main__':
     args.add_argument('--n_points', type=int, default=128)
     args.add_argument('--outputfolder', type=str, default='default')
     args.add_argument('--run_name', type=str, default='default')
+    args.add_argument('--beta', type=float, default=0.1)
     args = args.parse_args()
 
     root = os.getcwd()
