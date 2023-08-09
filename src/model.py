@@ -36,7 +36,6 @@ class DeepONet1DCNN(torch.nn.Module):
         self.B3_pool = torch.nn.MaxPool1d(kernel_size=2, stride=2)
         self.B4 = torch.nn.Linear(384, n_output)
 
-
         # Trunk net
         self.T1 = torch.nn.Linear(2, n_hidden)
         self.T2 = torch.nn.Linear(n_hidden, n_hidden)

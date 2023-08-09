@@ -56,9 +56,10 @@ def predict_trajectories_batched(model, dataset):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="/work3/s216416/deeponet/data/1a/100.npy")
-    parser.add_argument("--model_path", type=str, default='models/1a/DON_Dense_100_128_128.pt')
-    parser.add_argument("--out_name", default="tmp.png")
+    parser.add_argument("--data", type=str, default="/work3/s216416/deeponet/data/1e/100.npy")
+    parser.add_argument("--model_path", type=str, default='/zhome/ed/0/170279/Github/deeponet/models/e32bs2048/DON_Dense_100_32_32.pt')
+    parser.add_argument("--n_hidden", type=int, default=32)
+    parser.add_argument("--out_name", default="1e32bs2048.png")
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -70,22 +71,35 @@ if __name__ == "__main__":
    
     true_y = data['y'][0]
 
-    model = DeepONet(n_sensors=100, n_hidden=128, n_output=128)
+    model = DeepONet(n_sensors=100, n_hidden=args.n_hidden, n_output=args.n_hidden)
     model.load_state_dict(torch.load(args.model_path, map_location=torch.device(device)))
     model.to('cpu')
     print('trajectorizzing')
-    trajectories = predict_trajectories(model, data)
+    # trajectories = predict_trajectories(model, data)
+    trajectories = predict_trajectories_batched(model, data)
     print("ttrajectorzided")
 
     error = np.abs(true_y - trajectories)
     mae = np.mean(error)
 
     # Plot trajectories
-    fig, ax = plt.subplots(1, 3, figsize=(10, 10))
-    ax[0].imshow(true_y)
+    # put colorbar on all axes
+    frac = 0.09
+    fig, ax = plt.subplots(1, 3, figsize=(12, 4))
+
+    # Plot the first image
+    im1 = ax[0].imshow(true_y, cmap='viridis')
     ax[0].set_title('True')
-    ax[1].imshow(trajectories)
-    ax[1].set_title('Predicted')
-    ax[2].imshow(error)
-    ax[2].set_title('MAE: {}'.format(mae))
+    fig.colorbar(im1, ax=ax[0], orientation='vertical', fraction=frac)
+
+    im2 = ax[1].imshow(trajectories, cmap='viridis')
+    ax[1].set_title('True')
+    fig.colorbar(im2, ax=ax[1], orientation='vertical', fraction=frac)
+
+    im3 = ax[2].imshow(true_y, cmap='viridis')
+    ax[2].set_title('True')
+    fig.colorbar(im3, ax=ax[2], orientation='vertical', fraction=frac)
+
+    fig.tight_layout()
+
     plt.savefig(os.path.join('figs', args.out_name))

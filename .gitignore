@@ -14,3 +14,6 @@ src/__pycache__
 deeponet.egg-info
 
 **.npy
+
+figs
+tmp

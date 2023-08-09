@@ -56,7 +56,7 @@ def viz_static_16(us, xs, ts) -> None:
         ax.set_title("u")
 
     plt.tight_layout()
-    plt.show()
+    plt.savefig('tmp/viz.png')
     return None
 
 
