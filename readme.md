@@ -75,3 +75,4 @@ You might want to change some of the following options:
   - -q: queue that the job will be subscribed to (ours is the v100, pretty default for deep learning, but e.g. there is also an a100 queue)
 
 E.g., you might want to create multiple bash scripts for training a model on different datasets, or training different models, etc. Then, you might want to create multiple train_hpc_model_dataset.sh scripts, where you only modify the job name option ("-J"), so that you can start them at the same time, and see which one has finished, and which hasn't when you run bstat.
+
