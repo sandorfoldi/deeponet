@@ -15,7 +15,9 @@ source env/bin/activate
 
 echo "Running script..."
 
-python src/pred.py --data /work3/s216416/deeponet/data/1a/900.npy --model_path models/1a/DON_Dense_100_128_128.pt --out_name 1a.png
-python src/pred.py --data /work3/s216416/deeponet/data/1b/900.npy --model_path models/1b/DON_Dense_100_128_128.pt --out_name 1b.png
-python src/pred.py --data /work3/s216416/deeponet/data/1c/900.npy --model_path models/1c/DON_Dense_100_128_128.pt --out_name 1c.png
-python src/pred.py --data /work3/s216416/deeponet/data/1d/900.npy --model_path models/1d/DON_Dense_100_128_128.pt --out_name 1d.png
+# python src/pred.py --data /work3/s216416/deeponet/data/1e/900.npy --model_path models/1e/DON_Dense_100_128_128.pt --out_name 1e.png
+# python src/pred.py --data /work3/s216416/deeponet/data/1f/900.npy --model_path models/1f/DON_Dense_100_128_128.pt --out_name 1f.png
+# python src/pred.py --data /work3/s216416/deeponet/data/1g/900.npy --model_path models/1g/DON_Dense_100_128_128.pt --out_name 1g.png
+# python src/pred.py --data /work3/s216416/deeponet/data/1h/900.npy --model_path models/1h/DON_Dense_100_128_128.pt --out_name 1h.png
+
+python src/pred.py --data /work3/s216416/deeponet/data/1e/900.npy --model_path models/e64bs2048/DON_Dense_100_64_64.pt --out_name 1e64bs2048.png --n_hidden 64
