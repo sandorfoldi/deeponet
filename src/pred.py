@@ -49,17 +49,17 @@ def predict_trajectories_batched(model, dataset):
     with torch.no_grad():    
         for i, xt in tqdm(enumerate(trunk_input)):
             deep_output[i] = model(branch_input.unsqueeze(0), xt.unsqueeze(0)).item()
-    deep_output = deep_output.reshape(ys.shape)
+    deep_output = deep_output.reshape((ys.shape[1], ys.shape[0])).T
 
     return deep_output
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", type=str, default="/work3/s216416/deeponet/data/1e/100.npy")
-    parser.add_argument("--model_path", type=str, default='/zhome/ed/0/170279/Github/deeponet/models/e32bs2048/DON_Dense_100_32_32.pt')
-    parser.add_argument("--n_hidden", type=int, default=32)
-    parser.add_argument("--out_name", default="1e32bs2048.png")
+    parser.add_argument("--data", type=str, default="data/sin_1000/100.npy")
+    parser.add_argument("--model_path", type=str, default='models/sin_1000/DON_Dense_100_128_128.pt')
+    parser.add_argument("--n_hidden", type=int, default=128)
+    parser.add_argument("--out_name", default="sin_1000.png")
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -93,11 +93,11 @@ if __name__ == "__main__":
     fig.colorbar(im1, ax=ax[0], orientation='vertical', fraction=frac)
 
     im2 = ax[1].imshow(trajectories, cmap='viridis')
-    ax[1].set_title('True')
+    ax[1].set_title('Predicted')
     fig.colorbar(im2, ax=ax[1], orientation='vertical', fraction=frac)
 
-    im3 = ax[2].imshow(true_y, cmap='viridis')
-    ax[2].set_title('True')
+    im3 = ax[2].imshow(true_y-trajectories, cmap='viridis')
+    ax[2].set_title(f'MAE: {mae:.3f}')
     fig.colorbar(im3, ax=ax[2], orientation='vertical', fraction=frac)
 
     fig.tight_layout()

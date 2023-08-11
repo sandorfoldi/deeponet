@@ -1,6 +1,7 @@
+
 #!/bin/sh
-#BSUB -J BS_Dense
-#BSUB -W 1:00
+#BSUB -J 1_bs2048_128_a
+#BSUB -W 4:00
 #BSUB -q gpuv100
 #BSUB -R "rusage[mem=32GB]"
 #BSUB -R "select[gpu32gb]"
@@ -13,4 +14,4 @@ module load python3/3.9.11
 source env/bin/activate
 
 echo "Running script..."
-python src/model_training.py --dataset data/sin_1000 --epochs 1000 --batch_size 2048 --outputfolder sin_1000 --run_name sin_1000
+python src/train.py --dataset /work3/s216416/deeponet/data/1a --outputfolder 1_bs2048_128_a --run_name 1_bs2048_128_a --epochs 5000 --n_hidden 128  --batch_size 2048
