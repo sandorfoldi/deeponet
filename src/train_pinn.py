@@ -6,7 +6,7 @@ import numpy as np
 import os
 from glob import glob
 import wandb
-
+from src.wave_generator_gm import wave_equation
 """
     Class used to train and save a DeepONet model:
     Input: 
@@ -15,7 +15,23 @@ import wandb
     Output:
     
 """
+def make_loss_col_wave_eq(c):
+    def loss_col(net, u, xt):
+        preds = net(u, xt)
+        # first time derivative of preds
+        ddt_preds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        # second time derivative of preds
+        d2dt2_preds = torch.autograd.grad(ddt_preds[:, 0], xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
 
+        # first x derivative of preds
+        ddx_preds = torch.autograd.grad(preds, u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        # second x derivative of preds
+        d2dx2_preds = torch.autograd.grad(ddx_preds[:, 0], u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+
+        return torch.nn.MSELoss()(d2dt2_preds[:, 0], c**2 * d2dx2_preds[:, 0])
+
+
+    return loss_col
 
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):
@@ -113,7 +129,7 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
-    loss_col = loss_col_fac(src.wave_generator_gm.wave_equation, torch.nn.MSELoss())
+    loss_col = make_loss_col_wave_eq(5)
 
     print(f'Training {str(model)} for {epochs} epochs')
 
@@ -129,7 +145,7 @@ def train_model(args):
             pred = model(u_batch, xt_batch)
 
             loss_boundary = loss_fn(pred, y_batch.view(-1))
-            loss_collocation = loss_col(model, u_batch, xt_batch, y_batch)
+            loss_collocation = loss_col(model, u_batch, xt_batch)
             loss = loss_boundary + loss_collocation
             loss.backward()
             optimizer.step()
@@ -159,15 +175,6 @@ def train_model(args):
         
 
     return model, epoch_train_losses, epoch_val_losses
-
-
-def loss_col_fac(rhs, loss=torch.nn.MSELoss()):
-    def loss_col(net, u, xt, y):
-        preds = net(u, xt)
-        dpreds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-        dtarget = rhs(xt[:, 0], y, xt[:, 1])
-        return loss(dtarget, dpreds[:, 0])
-    return loss_col
 
 
 if __name__ == '__main__':
