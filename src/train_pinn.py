@@ -17,7 +17,12 @@ from src.wave_generator_gm import wave_equation
 """
 def make_loss_col_wave_eq(c):
     def loss_col(net, u, xt):
+        xt.requires_grad = True
+        u.requires_grad = True
         preds = net(u, xt)
+        # print(u.requires_grad)
+        # print(preds.requires_grad)
+        # print(xt.requires_grad)
         # first time derivative of preds
         ddt_preds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
         # second time derivative of preds
