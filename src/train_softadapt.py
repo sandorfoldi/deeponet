@@ -163,6 +163,10 @@ def train_model(args):
             train_losses.append(loss.item())
             softadapt.update([loss_boundary, loss_collocation])
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
+            wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
+            wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})
+            wandb.log({"alpha_boundary": alphas[0].item(), "epoch": epoch})
+            wandb.log({"alpha_collocation": alphas[1].item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
         wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
