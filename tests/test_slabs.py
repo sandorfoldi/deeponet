@@ -48,4 +48,4 @@ def test_slabweights_3():
     x_idx = slab_weights.x_to_idx(torch.tensor([0.05]))
     t_idx = slab_weights.t_to_idx(torch.tensor([0.05]))
 
-    assert slab_weights(torch.tensor([[x_idx, t_idx]])) == 0.
+    assert slab_weights.get_at_xt(torch.tensor([[x_idx, t_idx]])) == 0.
