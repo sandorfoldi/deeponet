@@ -1,2 +1,0 @@
-v=asdf
-echo $v
