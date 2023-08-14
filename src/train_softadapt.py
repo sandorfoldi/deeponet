@@ -161,7 +161,7 @@ def train_model(args):
             optimizer.step()
 
             train_losses.append(loss.item())
-            softadapt.update([loss_boundary, loss_collocation])
+            softadapt.update(torch.tensor([loss_boundary, loss_collocation]))
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
             wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
             wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})

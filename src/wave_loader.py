@@ -15,6 +15,9 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100, device='cpu'):
     data = np.load(paths[0], allow_pickle=True)
     x, t, y, u = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
+    xmin, xmax = x.min(), x.max()
+    tmax = t.max()
+
     n_sensors = len(u)
 
     x_all_idxs = np.arange(len(x))
@@ -65,17 +68,21 @@ def get_wave_datasets(paths, splits = (0.8, 0.2), n_points=100, device='cpu'):
     
     assert set([tuple(i) for i in train_us]).intersection(set([tuple(i) for i in val_us])) == set(), 'same initial condition present in train and val set'
 
-    ds_train = WaveDataset(train_xts, train_ys, train_us, device=device)
-    ds_valid = WaveDataset(val_xts, val_ys, val_us, device=device)
+    ds_train = WaveDataset(train_xts, train_ys, train_us, xmin, xmax, tmax, device=device)
+    ds_valid = WaveDataset(val_xts, val_ys, val_us, xmin, xmax, tmax, device=device)
 
     return ds_train, ds_valid
 
 
 class WaveDataset(torch.utils.data.Dataset):
-    def __init__(self, xts, ys, us, device='cpu', dtype=torch.float32):
+    def __init__(self, xts, ys, us, xmin, xmax, tmax, device='cpu', dtype=torch.float32):
         self.xts = torch.tensor(xts, dtype=dtype, device=device)
         self.ys = torch.tensor(ys, dtype=dtype, device=device)
         self.us = torch.tensor(us, dtype=dtype, device=device)
+        self.xmin = xmin
+        self.xmax = xmax
+        self.tmax = tmax
+
 
     def __len__(self):
         return len(self.xts)

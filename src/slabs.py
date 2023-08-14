@@ -15,17 +15,21 @@ class SlabWeights:
     def x_to_idx(self, x):
         if x.min() < self.x_min or x.max() > self.x_max:
             raise ValueError(f'x must be in [{self.x_min}, {self.x_max}]')
-        _ = ((x - self.x_min) / (self.x_max - self.x_min) * self.num_x_slabs) # ??
+        _ = ((x - self.x_min) / (self.x_max - self.x_min) * self.num_x_slabs)
         # cast to torch int tensor
-        return _.type(torch.int)
+        _ =  _.type(torch.int)
+        _ = torch.clamp(_, min=0, max=self.num_x_slabs - 1)
+        return _
 
 
     def t_to_idx(self, t):
         if t.min() < 0 or t.max() > self.t_max:
             raise ValueError(f't must be in [0, {self.t_max}]')
-        _ = t / self.t_max * self.num_t_slabs # ??
+        _ = t / self.t_max * self.num_t_slabs
         # cast to torch int tensor
-        return _.type(torch.int)    
+        _ = _.type(torch.int)    
+        _ = torch.clamp(_, min=0, max=self.num_t_slabs - 1)
+        return _
     
     def get_at_xt(self, xt):
         x, t = xt[:, 0], xt[:, 1]
