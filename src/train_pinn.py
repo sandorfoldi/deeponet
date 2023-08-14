@@ -184,7 +184,7 @@ def train_model(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset', type=str, default='data/default')
+    args.add_argument('--dataset', type=str, default='data/test_1a')
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)

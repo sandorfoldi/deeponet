@@ -6,6 +6,7 @@ import numpy as np
 import os
 from glob import glob
 import wandb
+from softadapt import SoftAdapt
 
 """
     Class used to train and save a DeepONet model:
@@ -138,17 +139,7 @@ def train_model(args):
 
     print(f'Training {str(model)} for {epochs} epochs')
     
-    # initialize softadapt coefficients
-    a_boundary = torch.tensor(.5)
-    a_collocation = torch.tensor(.5)
-
-    s_boundary = torch.tensor(0)
-    s_collocation = torch.tensor(0)
-    l_boundary_hist = torch.tensor([0, 0,])
-    l_collocation_hist = torch.tensor([0, 0])
-    beta = torch.tensor(args.beta)
-    epsilon = torch.tensor(1e-8)
-
+    softadapt = SoftAdapt(2, beta=0.1)
     for epoch in range(epochs):
         # wandb.log({"epoch": epoch})
         # Training
@@ -157,13 +148,6 @@ def train_model(args):
 
         for (xt_batch, y_batch, u_batch) in train_dataloader:
             # update softadapt coefficients
-            s_boundary = l_boundary_hist[-1] - l_boundary_hist[-2]
-            s_collocation = l_collocation_hist[-1] - l_collocation_hist[-2]
-            
-            #TODO: check if this is correct
-            a_boundary = torch.exp(beta*s_boundary) / (torch.exp(beta*s_boundary) + torch.exp(beta*s_collocation) + epsilon)
-            a_collocation = torch.exp(beta*s_collocation) / (torch.exp(beta*s_boundary) + torch.exp(beta*s_collocation) + epsilon)
-            
             # zero the parameter gradients
             optimizer.zero_grad()
             # Forward pass through network
@@ -171,16 +155,13 @@ def train_model(args):
 
             loss_boundary = loss_fn(pred, y_batch.view(-1))
             loss_collocation = loss_col(model, u_batch, xt_batch)
-            loss = a_boundary * loss_boundary + a_collocation * loss_collocation
+            alphas = softadapt.get_alphas()
+            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation
             loss.backward()
             optimizer.step()
 
             train_losses.append(loss.item())
-            l_boundary_hist[-2] = l_boundary_hist[-1]
-            l_collocation_hist[-2] = l_collocation_hist[-1]
-            l_boundary_hist[-1] = loss_boundary.item()
-            l_collocation_hist[-1] = loss_collocation.item()
-
+            softadapt.update([loss_boundary, loss_collocation])
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
