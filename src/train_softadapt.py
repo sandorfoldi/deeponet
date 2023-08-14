@@ -15,6 +15,27 @@ import wandb
     Output:
     
 """
+def make_loss_col_wave_eq(c):
+    def loss_col(net, u, xt):
+        xt.requires_grad = True
+        u.requires_grad = True
+        preds = net(u, xt)
+        # print(u.requires_grad)
+        # print(preds.requires_grad)
+        # print(xt.requires_grad)
+        # first time derivative of preds
+        ddt_preds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        # second time derivative of preds
+        d2dt2_preds = torch.autograd.grad(ddt_preds[:, 0], xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+
+        # first x derivative of preds
+        ddx_preds = torch.autograd.grad(preds, u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+        # second x derivative of preds
+        d2dx2_preds = torch.autograd.grad(ddx_preds[:, 0], u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
+
+        return torch.nn.MSELoss()(d2dt2_preds[:, 0], c**2 * d2dx2_preds[:, 0])
+    return loss_col
+
 
 
 def save_model(model, root, foldername):
@@ -113,20 +134,20 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
-    loss_col = loss_col_fac(src.wave_generator_gm.wave_equation, torch.nn.MSELoss())
+    loss_col = make_loss_col_wave_eq(5)
 
     print(f'Training {str(model)} for {epochs} epochs')
     
     # initialize softadapt coefficients
-    a_boundary = .5
-    a_collocation = .5
+    a_boundary = torch.tensor(.5)
+    a_collocation = torch.tensor(.5)
 
-    s_boundary = 0
-    s_collocation = 0
-    l_boundary_hist = [0, 0,]
-    l_collocation_hist = [0, 0]
-    beta = args.beta
-    epsilon = 1e-8
+    s_boundary = torch.tensor(0)
+    s_collocation = torch.tensor(0)
+    l_boundary_hist = torch.tensor([0, 0,])
+    l_collocation_hist = torch.tensor([0, 0])
+    beta = torch.tensor(args.beta)
+    epsilon = torch.tensor(1e-8)
 
     for epoch in range(epochs):
         # wandb.log({"epoch": epoch})
@@ -149,7 +170,7 @@ def train_model(args):
             pred = model(u_batch, xt_batch)
 
             loss_boundary = loss_fn(pred, y_batch.view(-1))
-            loss_collocation = loss_col(model, u_batch, xt_batch, y_batch)
+            loss_collocation = loss_col(model, u_batch, xt_batch)
             loss = a_boundary * loss_boundary + a_collocation * loss_collocation
             loss.backward()
             optimizer.step()
@@ -197,7 +218,7 @@ def loss_col_fac(rhs, loss=torch.nn.MSELoss()):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset', type=str, default='data/default')
+    args.add_argument('--dataset', type=str, default='data/test_1a')
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)
