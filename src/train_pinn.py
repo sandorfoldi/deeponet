@@ -61,6 +61,9 @@ def train_model(args):
     batch_size = args.batch_size
     lr = args.lr
     run_name = args.run_name
+    mu = args.mu
+
+    assert mu >= 0 and mu <= 1, "mu must be between 0 and 1"
 
     # login to wandb
     # api key is stored in private/wandb_api_key.txt
@@ -149,8 +152,8 @@ def train_model(args):
             # Forward pass through network
             pred = model(u_batch, xt_batch)
 
-            loss_boundary = loss_fn(pred, y_batch.view(-1))
-            loss_collocation = loss_col(model, u_batch, xt_batch)
+            loss_boundary = (1-mu) * loss_fn(pred, y_batch.view(-1))
+            loss_collocation = mu * loss_col(model, u_batch, xt_batch)
             loss = loss_boundary + loss_collocation
             loss.backward()
             optimizer.step()
@@ -195,6 +198,7 @@ if __name__ == '__main__':
     args.add_argument('--n_points', type=int, default=128)
     args.add_argument('--outputfolder', type=str, default='default')
     args.add_argument('--run_name', type=str, default='default')
+    args.add_argument('--mu', type=float, default=0.0)
     args = args.parse_args()
 
     root = os.getcwd()

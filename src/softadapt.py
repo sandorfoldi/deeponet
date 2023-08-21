@@ -3,10 +3,11 @@ import torch
 
 class SoftAdapt:
     def __init__(self, num_components, beta=1e-3):
-        self.beta = torch.tensor(beta)
-        self.epsilon = torch.tensor(1e-8)
-        self.history = torch.zeros([num_components, 2])
-        self.alphas = torch.ones([num_components])
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.beta = torch.tensor(beta, device=self.device)
+        self.epsilon = torch.tensor(1e-8, device=self.device)
+        self.history = torch.zeros([num_components, 2], device=self.device)
+        self.alphas = torch.ones([num_components], device=self.device)
     
     def get_alphas(self):
         return self.alphas

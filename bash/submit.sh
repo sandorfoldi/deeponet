@@ -1,8 +1,6 @@
-bsub < bash/train_exp_pinn_1a_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1b_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1c_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1d_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1e_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1f_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1g_128_bs_2048.sh
-bsub < bash/train_exp_pinn_1h_128_bs_2048.sh
+bsub < bash/exp_pinn/1c_mu00.sh
+bsub < bash/exp_pinn/1c_mu02.sh
+bsub < bash/exp_pinn/1c_mu04.sh
+bsub < bash/exp_pinn/1c_mu06.sh
+bsub < bash/exp_pinn/1c_mu08.sh
+bsub < bash/exp_pinn/1c_mu10.sh

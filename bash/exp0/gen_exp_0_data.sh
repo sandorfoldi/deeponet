@@ -7,3 +7,5 @@ python src/wave_generator_gm.py --root /work3/s216416/deeponet/data/1e --m_min 2
 python src/wave_generator_gm.py --root /work3/s216416/deeponet/data/1f --m_min 20 --m_max 80 --v_min 100 --v_max 100 --num_g 1
 python src/wave_generator_gm.py --root /work3/s216416/deeponet/data/1g --m_min 20 --m_max 80 --v_min 50 --v_max 50 --num_g 1
 python src/wave_generator_gm.py --root /work3/s216416/deeponet/data/1h --m_min 20 --m_max 80 --v_min 20 --v_max 20 --num_g 1
+
+# python src/wave_generator_gm.py --root /work3/s216416/deeponet/data/test --m_min 20 --m_max 80 --v_min 200 --v_max 200 --num_g 1 --n_ic 32

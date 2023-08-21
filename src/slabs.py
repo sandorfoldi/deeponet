@@ -3,10 +3,13 @@ import torch
 
 class SlabWeights:
     def __init__(self, num_x_slabs, num_t_slabs, x_min, x_max, t_max):
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        print(f'Slabweights using device: {self.device}')
         print('Warning, updating slab weights is not tested properly')
         self.num_x_slabs = num_x_slabs
         self.num_t_slabs = num_t_slabs
-        self.weights = torch.ones([num_x_slabs, num_t_slabs])
+        self.weights = torch.ones([num_x_slabs, num_t_slabs], device=self.device)
+        print(self.weights)
         self.x_min = torch.tensor(x_min)
         self.x_max = torch.tensor(x_max)
         self.t_max = torch.tensor(t_max)
@@ -35,6 +38,12 @@ class SlabWeights:
         x, t = xt[:, 0], xt[:, 1]
         x_idxs = self.x_to_idx(x)
         t_idxs = self.t_to_idx(t)
+        # print('----\n----\n')
+        # print(self.weights)
+        # print('----')
+        # print(x_idxs)
+        # print('----')
+        # print(t_idxs)
         return self.weights[x_idxs, t_idxs]
     
     def set_at_xt(self, xt, val):
@@ -55,7 +64,7 @@ class SlabWeights:
         x, t = xt_batch[:, 0], xt_batch[:, 1]
         x_idxs = self.x_to_idx(x)
         t_idxs = self.t_to_idx(t)
-        losses = avg_loss * torch.ones([self.num_x_slabs, self.num_t_slabs])
+        losses = avg_loss * torch.ones([self.num_x_slabs, self.num_t_slabs], device=self.device)
         losses[x_idxs, t_idxs] = loss_batch
 
         return losses.view([-1])

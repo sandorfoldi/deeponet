@@ -47,8 +47,9 @@ def predict_trajectories_batched(model, dataset):
     deep_output = np.zeros_like(ys).flatten()
 
     with torch.no_grad():    
-        for i, xt in tqdm(enumerate(trunk_input)):
-            deep_output[i] = model(branch_input.unsqueeze(0), xt.unsqueeze(0)).item()
+        # for i, xt in tqdm(enumerate(trunk_input)):
+        #     deep_output[i] = model(branch_input.unsqueeze(0), xt.unsqueeze(0)).item()
+        deep_output = model(torch.tile(branch_input.unsqueeze(0), (trunk_input.shape[0], 1)), trunk_input).squeeze(0).numpy()
     deep_output = deep_output.reshape((ys.shape[1], ys.shape[0])).T
 
     return deep_output
