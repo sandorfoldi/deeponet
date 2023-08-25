@@ -13,6 +13,8 @@ wandb
 src/__pycache__
 deeponet.egg-info
 
+tests/__pycache__
+
 **.npy
 
 figs
