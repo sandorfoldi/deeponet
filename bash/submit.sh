@@ -1,6 +1,7 @@
-bsub < bash/exp_pinn/1c_mu00.sh
-bsub < bash/exp_pinn/1c_mu02.sh
-bsub < bash/exp_pinn/1c_mu04.sh
-bsub < bash/exp_pinn/1c_mu06.sh
-bsub < bash/exp_pinn/1c_mu08.sh
-bsub < bash/exp_pinn/1c_mu10.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_-10.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_-1.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_-01.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_0.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_01.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_1.sh
+bsub < bash/exp_softadapt/train_softa_1c_mu_1_1e15_beta_10.sh

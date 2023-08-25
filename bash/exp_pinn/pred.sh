@@ -14,9 +14,9 @@ module load python3/3.9.11
 source env/bin/activate
 
 echo "Running script..."
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_00/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_00.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_02/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_02.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_04/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_04.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_06/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_06.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_08/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_08.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_10/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_10.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e12/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e12.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e13/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e13.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e14/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e14.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e15/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e15.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e16/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e16.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1c/100.npy --model_path models/pinn_1c_mu_1_1e17/DON_Dense_100_128_128.pt --out_name pinn_1c_mu_1_1e17.png --n_hidden 128
