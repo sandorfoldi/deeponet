@@ -7,6 +7,8 @@ import os
 from glob import glob
 import wandb
 from src.wave_generator_gm import wave_equation
+from src.pinn import make_loss_col_wave_eq
+
 """
     Class used to train and save a DeepONet model:
     Input: 
@@ -15,28 +17,6 @@ from src.wave_generator_gm import wave_equation
     Output:
     
 """
-def make_loss_col_wave_eq(c):
-    def loss_col(net, u, xt):
-        xt.requires_grad = True
-        u.requires_grad = True
-        preds = net(u, xt)
-        # print(u.requires_grad)
-        # print(preds.requires_grad)
-        # print(xt.requires_grad)
-        # first time derivative of preds
-        ddt_preds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-        # second time derivative of preds
-        d2dt2_preds = torch.autograd.grad(ddt_preds[:, 0], xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-
-        # first x derivative of preds
-        ddx_preds = torch.autograd.grad(preds, u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-        # second x derivative of preds
-        d2dx2_preds = torch.autograd.grad(ddx_preds[:, 0], u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-
-        return torch.nn.MSELoss()(d2dt2_preds[:, 0], c**2 * d2dx2_preds[:, 0])
-
-
-    return loss_col
 
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):
@@ -167,8 +147,6 @@ def train_model(args):
         wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
         lr_scheduler.step()
 
-
-
         # Validation
         model.eval()
         validation_losses = []
@@ -189,7 +167,7 @@ def train_model(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset', type=str, default='data/test_1a')
+    args.add_argument('--dataset', type=str, default='/work3/s216416/deeponet/data/test_1a')
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)
