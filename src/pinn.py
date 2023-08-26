@@ -7,7 +7,6 @@ def make_loss_col_wave_eq(c):
         u.requires_grad = True
         preds = net(u, xt)
 
-        
         # first xt derivative of preds
         ddxt_preds = torch.autograd.grad(preds, xt, create_graph=True, grad_outputs=torch.ones_like(preds))[0]
 

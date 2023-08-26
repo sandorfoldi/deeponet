@@ -6,18 +6,10 @@ import numpy as np
 import os
 from glob import glob
 import wandb
-from src.wave_generator_gm import wave_equation
 from src.pinn import make_loss_col_wave_eq
 
-"""
-    Class used to train and save a DeepONet model:
-    Input: 
 
-
-    Output:
-    
-"""
-
+# utility functions
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):
         os.makedirs(root + '/models/' + foldername)
@@ -32,7 +24,34 @@ def save_results(losses, root, foldername, filename):
 
     np.save(root + '/results/' + foldername + '/' + filename, losses)
 
+
 def train_model(args):
+    """
+    Train a model on a dataset using pinn
+
+    Parameters
+    ----------
+    args.dataset_path : str
+        Path to dataset
+    args.n_points : int
+        Number of points to sample from each simulation in the dataset
+    args.model_name : str
+        Model type to use, currently only woring with FFNN
+    args.hidden_units : int
+        Number of hidden units in each layer of the model
+    args.epochs : int
+        Number of epochs to train for
+    args.batch_size : int
+        Batch size
+    args.lr : float
+        Learning rate
+    args.run_name : str
+        Name of the run, used for wandb logging
+    args.mu_boundary : float
+        Weight of boundary loss
+    args.mu_colloc : float
+        Weight of collocation loss
+    """
     dataset_path = args.dataset
     n_points = args.n_points
     model_name = args.model
@@ -71,8 +90,6 @@ def train_model(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f'Device:\t{device}')
     
-    root = os.getcwd()
-
     paths = glob(dataset_path +"/" + '*.npy')
 
     if (len(paths) == 0):
@@ -117,12 +134,13 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
+    # nominal wave velocity c = 5 in datasets 1a-1h
+    # other datasets are not used
     loss_col = make_loss_col_wave_eq(5)
 
     print(f'Training {str(model)} for {epochs} epochs')
 
     for epoch in range(epochs):
-        # wandb.log({"epoch": epoch})
         # Training
         model.train()
         train_losses = []
