@@ -136,7 +136,7 @@ def train_model(args):
 
     # nominal wave velocity c = 5 in datasets 1a-1h
     # other datasets are not used
-    loss_col = make_loss_col_wave_eq(5)
+    loss_col = make_loss_col_wave_eq(0.5)
 
     print(f'Training {str(model)} for {epochs} epochs')
 
