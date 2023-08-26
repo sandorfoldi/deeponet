@@ -37,21 +37,19 @@ def test_pinn_1():
 
 
 def todo_test_pinn_2():
-    path = '/work3/s216416/deeponet/data/1c/1.npy'
+    path = '/work3/s216416/deeponet/data/1c/100.npy'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     data = np.load(path, allow_pickle=True)
     xs, ts, ys, us = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
 
     xs, ts, ys, us = torch.tensor([xs], device=device, dtype=torch.float32), torch.tensor([ts], device=device, dtype=torch.float32), torch.tensor([ys], device=device, dtype=torch.float32), torch.tensor([us], device=device, dtype=torch.float32)
-    loss_col = make_loss_col_wave_eq(5)
-    net = DeepONetNoBatchNorm(n_sensors=100, n_hidden=128, n_output=128)
 
-    idx_x = 200
+    idx_x = 900
     idx_t = 100
 
     # finite difference second order derivatives
-    d2y_dt2 = (ys[0][idx_x, idx_t+1] - 2 * ys[0][idx_x, idx_t] + ys[0][idx_x, idx_t-1]) / (2 * (ts[0][idx_t] - ts[0][idx_t-1]))
-    d2y_dx2 = (ys[0][idx_x+1, idx_t] - 2 * ys[0][idx_x, idx_t] + ys[0][idx_x-1, idx_t]) / (2 * (xs[0][idx_x] - xs[0][idx_x-1]))
+    d2y_dt2 = (ys[0][idx_x, idx_t+1] - 2 * ys[0][idx_x, idx_t] + ys[0][idx_x, idx_t-1]) / (ts[0][idx_t+1] - ts[0][idx_t-1])
+    d2y_dx2 = (ys[0][idx_x+1, idx_t] - 2 * ys[0][idx_x, idx_t] + ys[0][idx_x-1, idx_t]) / (xs[0][idx_x+1] - xs[0][idx_x-1])
 
     print(f'd2y_dt2:\t\t\t{d2y_dt2:.4e}')
     print(f'd2y_dx2:\t\t\t{d2y_dx2:.4e}')
