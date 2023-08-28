@@ -89,16 +89,16 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 3, figsize=(12, 4))
 
     # Plot the first image
-    im1 = ax[0].imshow(true_y, cmap='viridis')
+    im1 = ax[0].imshow(true_y, cmap='viridis', vmin=-.1, vmax=.1)
     ax[0].set_title('True')
     fig.colorbar(im1, ax=ax[0], orientation='vertical', fraction=frac)
 
-    im2 = ax[1].imshow(trajectories, cmap='viridis')
+    im2 = ax[1].imshow(trajectories, cmap='viridis', vmin=-.1, vmax=.1)
     ax[1].set_title('Predicted')
     fig.colorbar(im2, ax=ax[1], orientation='vertical', fraction=frac)
 
-    im3 = ax[2].imshow(true_y-trajectories, cmap='viridis')
-    ax[2].set_title(f'MAE: {mae:.3f}')
+    im3 = ax[2].imshow(((true_y-trajectories)**2)**.5, cmap='viridis', vmin=0)
+    ax[2].set_title(f'MSE: {mae:.3f}')
     fig.colorbar(im3, ax=ax[2], orientation='vertical', fraction=frac)
 
     fig.tight_layout()

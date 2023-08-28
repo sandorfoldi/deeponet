@@ -1,12 +1,13 @@
 import torch 
 import argparse
 from model import DeepONet, DeepONet1DCNN, DeepONet2DCNN
-from wave_loader import get_wave_datasets
+from wave_loader_timeslabs import get_wave_datasets_timeslabs
 import numpy as np
 import os
 from glob import glob
 import wandb
 from softadapt import SoftAdapt
+from src.pinn import make_loss_col_wave_eq
 
 """
     Class used to train and save a DeepONet model:
@@ -16,27 +17,6 @@ from softadapt import SoftAdapt
     Output:
     
 """
-def make_loss_col_wave_eq(c):
-    def loss_col(net, u, xt):
-        xt.requires_grad = True
-        u.requires_grad = True
-        preds = net(u, xt)
-        # print(u.requires_grad)
-        # print(preds.requires_grad)
-        # print(xt.requires_grad)
-        # first time derivative of preds
-        ddt_preds = torch.autograd.grad(preds, xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-        # second time derivative of preds
-        d2dt2_preds = torch.autograd.grad(ddt_preds[:, 0], xt, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-
-        # first x derivative of preds
-        ddx_preds = torch.autograd.grad(preds, u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-        # second x derivative of preds
-        d2dx2_preds = torch.autograd.grad(ddx_preds[:, 0], u, grad_outputs=torch.ones_like(preds), create_graph=True, retain_graph=True)[0]
-
-        return torch.nn.MSELoss()(d2dt2_preds[:, 0], c**2 * d2dx2_preds[:, 0])
-    return loss_col
-
 
 
 def save_model(model, root, foldername):
@@ -64,6 +44,10 @@ def train_model(args):
     run_name = args.run_name
     mu_boundary = args.mu_boundary
     mu_colloc = args.mu_colloc
+    mu_ic = args.mu_ic
+    model_path = args.model_path
+    time_frac = args.time_frac
+
 
 
     # login to wandb
@@ -92,27 +76,29 @@ def train_model(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(f'Device:\t{device}')
     
-    root = os.getcwd()
-
     paths = glob(dataset_path +"/" + '*.npy')
 
     if (len(paths) == 0):
         raise Exception('No files found in dataset folder')
     
     # Load dataset
-    ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points, device=device)
+    ds_train, ds_valid = get_wave_datasets_timeslabs(paths, n_points=n_points, device=device, time_frac=time_frac)
 
     # Train and validation loaders
     train_dataloader =  torch.utils.data.DataLoader(ds_train, batch_size=batch_size, shuffle=True)
     validation_dataloader = torch.utils.data.DataLoader(ds_valid, batch_size=batch_size, shuffle=True)
 
     # Model
-    model = DeepONet(100, hidden_units, hidden_units)
+    if model_path:
+        model = DeepONet(100, hidden_units, hidden_units)
+        model.load_state_dict(torch.load(model_path))
+    else:
+        model = DeepONet(100, hidden_units, hidden_units)
 
-    if model_name == 'CNN1D':
-        model = DeepONet1DCNN(100, hidden_units, hidden_units)
-    elif model_name == 'CNN2D':
-        model = DeepONet2DCNN(100, hidden_units, hidden_units)
+        if model_name == 'CNN1D':
+            model = DeepONet1DCNN(100, hidden_units, hidden_units)
+        elif model_name == 'CNN2D':
+            model = DeepONet2DCNN(100, hidden_units, hidden_units)
 
     model.to(device)
 
@@ -138,13 +124,12 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
-    loss_col = make_loss_col_wave_eq(5)
+    loss_col = make_loss_col_wave_eq(0.5)
 
     print(f'Training {str(model)} for {epochs} epochs')
     
-    softadapt = SoftAdapt(2, beta=0.1)
+    softadapt = SoftAdapt(3, beta=0.1)
     for epoch in range(epochs):
-        # wandb.log({"epoch": epoch})
         # Training
         model.train()
         train_losses = []
@@ -158,13 +143,20 @@ def train_model(args):
 
             loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
             loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
+            
+            xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
+            pred_ic = model(u_batch, xt_start)
+            ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
+            ddt_pred_ic = ddxt_pred_ic[:, 1]
+            loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
+            
             alphas = softadapt.get_alphas()
-            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation
+            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation + alphas[2] * loss_ic_deriv
             loss.backward()
             optimizer.step()
 
             train_losses.append(loss.item())
-            softadapt.update(torch.tensor([loss_boundary, loss_collocation]))
+            softadapt.update(torch.tensor([loss_boundary, loss_collocation, loss_ic_deriv]))
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
             wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
             wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})
@@ -218,6 +210,9 @@ if __name__ == '__main__':
     args.add_argument('--beta', type=float, default=0.1)
     args.add_argument('--mu_boundary', type=float, default=1.0)
     args.add_argument('--mu_colloc', type=float, default=0.0)
+    args.add_argument('--mu_ic', type=float, default=1e-4)
+    args.add_argument('--model_path', type=str, default=None)
+    args.add_argument('--time_frac', type=float, default=1.0)
 
     args = args.parse_args()
 

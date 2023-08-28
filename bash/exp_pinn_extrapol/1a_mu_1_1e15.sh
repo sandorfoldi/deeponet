@@ -1,6 +1,6 @@
 
 #!/bin/sh
-#BSUB -J pinnextra_1a_mu_1_1e15
+#BSUB -J pinnextra_1a_mu_1_1e15_long
 #BSUB -W 12:00
 #BSUB -q gpuv100
 #BSUB -R "rusage[mem=32GB]"
@@ -14,4 +14,4 @@ module load python3/3.9.11
 source env/bin/activate
 
 echo "Running script..."
-python src/train_pinn.py --dataset /work3/s216416/deeponet/data/1a --outputfolder pinnextra_1a_mu_1_1e15 --run_name pinnextra_1a_mu_1_1e15 --mu_boundary 1.0 --mu_colloc 1e15 --epochs 2000 --n_hidden 128  --batch_size 2048 --time_frac 0.5
+python src/train_pinn.py --dataset /work3/s216416/deeponet/data/1a --outputfolder pinnextra_1a_mu_1_1e15_long --run_name pinnextra_1a_mu_1_1e15_long --mu_boundary 1.0 --mu_colloc 1e15 --epochs 5000 --n_hidden 128  --batch_size 2048 --time_frac 0.5
