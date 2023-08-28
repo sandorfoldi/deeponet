@@ -186,6 +186,9 @@ class DeepONet(torch.nn.Module):
 
         return output
 
+    def __repr__(self):
+        return 'DON_Dense_{}_{}_{}'.format(self.n_sensors, self.n_hidden, self.n_output)
+
 
 class DeepONetNoBatchNorm(torch.nn.Module):
     def __init__(self, n_sensors, n_hidden, n_output):

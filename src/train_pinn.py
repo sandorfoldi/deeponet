@@ -1,7 +1,7 @@
 import torch 
 import argparse
 from model import DeepONet, DeepONet1DCNN, DeepONet2DCNN
-from wave_loader import get_wave_datasets
+from wave_loader_timeslabs import get_wave_datasets_timeslabs
 import numpy as np
 import os
 from glob import glob
@@ -15,6 +15,8 @@ def save_model(model, root, foldername):
         os.makedirs(root + '/models/' + foldername)
 
     filename = str(model) + '.pt'
+    print('-------------------')
+    print(root + '/models/' + foldername + '/' + filename)
     torch.save(model.state_dict(), root + '/models/' + foldername + '/' + filename)
 
 
@@ -63,6 +65,8 @@ def train_model(args):
     mu_boundary = args.mu_boundary
     mu_colloc = args.mu_colloc
     mu_ic = args.mu_ic
+    model_path = args.model_path
+    time_frac = args.time_frac
 
 
     # login to wandb
@@ -97,19 +101,23 @@ def train_model(args):
         raise Exception('No files found in dataset folder')
     
     # Load dataset
-    ds_train, ds_valid = get_wave_datasets(paths, n_points=n_points, device=device)
+    ds_train, ds_valid = get_wave_datasets_timeslabs(paths, n_points=n_points, device=device, time_frac=time_frac)
 
     # Train and validation loaders
     train_dataloader =  torch.utils.data.DataLoader(ds_train, batch_size=batch_size, shuffle=True)
     validation_dataloader = torch.utils.data.DataLoader(ds_valid, batch_size=batch_size, shuffle=True)
 
     # Model
-    model = DeepONet(100, hidden_units, hidden_units)
+    if model_path:
+        model = DeepONet(100, hidden_units, hidden_units)
+        model.load_state_dict(torch.load(model_path))
+    else:
+        model = DeepONet(100, hidden_units, hidden_units)
 
-    if model_name == 'CNN1D':
-        model = DeepONet1DCNN(100, hidden_units, hidden_units)
-    elif model_name == 'CNN2D':
-        model = DeepONet2DCNN(100, hidden_units, hidden_units)
+        if model_name == 'CNN1D':
+            model = DeepONet1DCNN(100, hidden_units, hidden_units)
+        elif model_name == 'CNN2D':
+            model = DeepONet2DCNN(100, hidden_units, hidden_units)
 
     model.to(device)
 
@@ -221,6 +229,9 @@ if __name__ == '__main__':
     args.add_argument('--mu_boundary', type=float, default=1.0)
     args.add_argument('--mu_colloc', type=float, default=1e18)
     args.add_argument('--mu_ic', type=float, default=1e-4)
+    args.add_argument('--model_path', type=str, default=None)
+    args.add_argument('--time_frac', type=float, default=1.0)
+    
 
     args = args.parse_args()
 

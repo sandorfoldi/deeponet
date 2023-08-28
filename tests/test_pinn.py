@@ -37,7 +37,7 @@ def test_pinn_1():
 
 
 def todo_test_pinn_2():
-    path = '/work3/s216416/deeponet/data/1c/100.npy'
+    path = '/work3/s216416/deeponet/data/1g/800.npy'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     data = np.load(path, allow_pickle=True)
     xs, ts, ys, us = data['x'][0], data['t'][0], data['y'][0], data['u'][0]
