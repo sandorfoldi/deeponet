@@ -9,15 +9,6 @@ import wandb
 from softadapt import SoftAdapt
 from src.pinn import make_loss_col_wave_eq
 
-"""
-    Class used to train and save a DeepONet model:
-    Input: 
-
-
-    Output:
-    
-"""
-
 
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):

@@ -7,15 +7,6 @@ import os
 from glob import glob
 import wandb
 
-"""
-    Class used to train and save a DeepONet model:
-    Input: 
-
-
-    Output:
-    
-"""
-
 
 def save_model(model, root, foldername):
     if not os.path.exists(root + '/models/' + foldername):
