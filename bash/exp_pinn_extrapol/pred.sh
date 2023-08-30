@@ -15,9 +15,9 @@ source env/bin/activate
 
 echo "Running script..."
 
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_0/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_0.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e14/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e14.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e15/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e15.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e16/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e16.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e17/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e17.png --n_hidden 128
-python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e18/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e18.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e14_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e14_long.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e15_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e15_long.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e16_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e16_long.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e17_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e17_long.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_1e18_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_1e18_long.png --n_hidden 128
+python src/pred.py --data /work3/s216416/deeponet/data/1a/100.npy --model_path models/pinnextra_1a_mu_1_0_long/DON_Dense_100_128_128.pt --out_name pinnextra_1a_mu_1_0_long.png --n_hidden 128

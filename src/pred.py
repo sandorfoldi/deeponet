@@ -61,6 +61,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default='models/sin_1000/DON_Dense_100_128_128.pt')
     parser.add_argument("--n_hidden", type=int, default=128)
     parser.add_argument("--out_name", default="sin_1000.png")
+    parser.add_argument("--num_sensors", type=int, default=100)
     args = parser.parse_args()
 
     if torch.cuda.is_available():
@@ -72,13 +73,13 @@ if __name__ == "__main__":
    
     true_y = data['y'][0]
 
-    model = DeepONet(n_sensors=100, n_hidden=args.n_hidden, n_output=args.n_hidden)
+    model = DeepONet(n_sensors=args.num_sensors, n_hidden=args.n_hidden, n_output=args.n_hidden)
     model.load_state_dict(torch.load(args.model_path, map_location=torch.device(device)))
     model.to('cpu')
-    print('trajectorizzing')
+    print('trajectorizing')
     # trajectories = predict_trajectories(model, data)
     trajectories = predict_trajectories_batched(model, data)
-    print("ttrajectorzided")
+    print("done")
 
     error = np.abs(true_y - trajectories)
     mae = np.mean(error)

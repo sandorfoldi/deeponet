@@ -90,15 +90,15 @@ def train_model(args):
 
     # Model
     if model_path:
-        model = DeepONet(100, hidden_units, hidden_units)
+        model = DeepONet(ds_train.us.shape[1], hidden_units, hidden_units)
         model.load_state_dict(torch.load(model_path))
     else:
-        model = DeepONet(100, hidden_units, hidden_units)
+        model = DeepONet(ds_train.us.shape[1], hidden_units, hidden_units)
 
         if model_name == 'CNN1D':
-            model = DeepONet1DCNN(100, hidden_units, hidden_units)
+            model = DeepONet1DCNN(ds_train.us.shape[1], hidden_units, hidden_units)
         elif model_name == 'CNN2D':
-            model = DeepONet2DCNN(100, hidden_units, hidden_units)
+            model = DeepONet2DCNN(ds_train.us.shape[1], hidden_units, hidden_units)
 
     model.to(device)
 
@@ -160,8 +160,10 @@ def train_model(args):
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
             wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
             wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})
+            wandb.log({"train_loss_ic_deriv": loss_ic_deriv.item(), "epoch": epoch})
             wandb.log({"alpha_boundary": alphas[0].item(), "epoch": epoch})
             wandb.log({"alpha_collocation": alphas[1].item(), "epoch": epoch})
+            wandb.log({"alpha_ic_deriv": alphas[2].item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
         wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
@@ -198,7 +200,7 @@ def loss_col_fac(rhs, loss=torch.nn.MSELoss()):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    args.add_argument('--dataset', type=str, default='data/test_1a')
+    args.add_argument('--dataset', type=str, default='/work3/s216416/deeponet/data/2a/')
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
     args.add_argument('--epochs', type=int, default=100)
