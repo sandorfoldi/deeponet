@@ -84,11 +84,6 @@ def train_model(args):
     # Model
     model = DeepONet(100, hidden_units, hidden_units)
 
-    if model_name == 'CNN1D':
-        model = DeepONet1DCNN(100, hidden_units, hidden_units)
-    elif model_name == 'CNN2D':
-        model = DeepONet2DCNN(100, hidden_units, hidden_units)
-
     model.to(device)
 
     # asserting model and dataset devices

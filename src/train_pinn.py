@@ -114,11 +114,6 @@ def train_model(args):
     else:
         model = DeepONet(ds_train.us.shape[1], hidden_units, hidden_units)
 
-        if model_name == 'CNN1D':
-            model = DeepONet1DCNN(ds_train.us.shape[1], hidden_units, hidden_units)
-        elif model_name == 'CNN2D':
-            model = DeepONet2DCNN(ds_train.us.shape[1], hidden_units, hidden_units)
-
     model.to(device)
 
     # asserting model and dataset devices
@@ -202,20 +197,7 @@ def train_model(args):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser()
-    """
-    args.add_argument('--dataset', type=str, default='/work3/s216416/deeponet/data/test_1a')
-    args.add_argument('--model', type=str, default='FFNN')
-    args.add_argument('--n_hidden', type=int, default=128)
-    args.add_argument('--epochs', type=int, default=100)
-    args.add_argument('--batch_size', type=int, default=32)
-    args.add_argument('--lr', type=float, default=1e-3) 
-    args.add_argument('--n_points', type=int, default=128)
-    args.add_argument('--outputfolder', type=str, default='default')
-    args.add_argument('--run_name', type=str, default='default')
-    args.add_argument('--mu_boundary', type=float, default=1.0)
-    args.add_argument('--mu_colloc', type=float, default=1e18)
-    args.add_argument('--mu_ic', type=float, default=1e-4)
-    """
+
     args.add_argument('--dataset', type=str, default='/work3/s216416/deeponet/data/1c')
     args.add_argument('--model', type=str, default='FFNN')
     args.add_argument('--n_hidden', type=int, default=128)
