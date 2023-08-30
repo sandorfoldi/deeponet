@@ -144,14 +144,8 @@ def train_model(args):
             loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
             loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
             
-            # xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
-            # pred_ic = model(u_batch, xt_start)
-            # ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
-            # ddt_pred_ic = ddxt_pred_ic[:, 1]
-            # loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
-            
             alphas = softadapt.get_alphas()
-            # loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation + alphas[2] * loss_ic_deriv
+
             loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation
             loss.backward()
             optimizer.step()
@@ -175,6 +169,14 @@ def train_model(args):
         validation_losses = []
         model.eval()
         for (xt_batch, y_batch, u_batch) in validation_dataloader:
+            pred = model(u_batch, xt_batch)
+
+            loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
+            loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
+            
+            alphas = softadapt.get_alphas()
+
+            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation
 
             validation_losses.append(loss.item())
     

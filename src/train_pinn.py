@@ -162,15 +162,7 @@ def train_model(args):
             loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
             loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
 
-            xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
-            pred_ic = model(u_batch, xt_start)
-            ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
-            ddt_pred_ic = ddxt_pred_ic[:, 1]
-            loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
-
-
-
-            loss = loss_boundary + loss_collocation + loss_ic_deriv
+            loss = loss_boundary + loss_collocation
             loss.backward()
             optimizer.step()
 
@@ -178,7 +170,6 @@ def train_model(args):
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
             wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
             wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})
-            wandb.log({"train_loss_ic_deriv": loss_ic_deriv.item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
         wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
@@ -194,13 +185,8 @@ def train_model(args):
             loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
             loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
 
-            xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
-            pred_ic = model(u_batch, xt_start)
-            ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
-            ddt_pred_ic = ddxt_pred_ic[:, 1]
-            loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
 
-            loss = loss_boundary + loss_collocation + loss_ic_deriv
+            loss = loss_boundary + loss_collocation
 
             validation_losses.append(loss.item())
     
