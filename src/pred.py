@@ -90,11 +90,13 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(1, 3, figsize=(12, 4))
 
     # Plot the first image
-    im1 = ax[0].imshow(true_y, cmap='viridis', vmin=-.1, vmax=.1)
+    # im1 = ax[0].imshow(true_y, cmap='viridis', vmin=-.1, vmax=.1)
+    im1 = ax[0].imshow(true_y, cmap='viridis')
     ax[0].set_title('True')
     fig.colorbar(im1, ax=ax[0], orientation='vertical', fraction=frac)
 
-    im2 = ax[1].imshow(trajectories, cmap='viridis', vmin=-.1, vmax=.1)
+    # im2 = ax[1].imshow(trajectories, cmap='viridis', vmin=-.1, vmax=.1)
+    im2 = ax[1].imshow(trajectories, cmap='viridis')
     ax[1].set_title('Predicted')
     fig.colorbar(im2, ax=ax[1], orientation='vertical', fraction=frac)
 

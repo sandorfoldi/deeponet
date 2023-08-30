@@ -143,7 +143,7 @@ def train_model(args):
     # Train
     epoch_train_losses, epoch_val_losses = [], []
 
-    # nominal wave velocity c = 5 in datasets 1a-1h
+    # nominal wave velocity c = 0.5 in datasets 1a-1h
     # other datasets are not used
     loss_col = make_loss_col_wave_eq(0.5)
 
