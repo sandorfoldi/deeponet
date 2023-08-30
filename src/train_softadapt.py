@@ -128,7 +128,7 @@ def train_model(args):
 
     print(f'Training {str(model)} for {epochs} epochs')
     
-    softadapt = SoftAdapt(3, beta=0.1)
+    softadapt = SoftAdapt(2, beta=0.1)
     for epoch in range(epochs):
         # Training
         model.train()
@@ -144,26 +144,25 @@ def train_model(args):
             loss_boundary = mu_boundary * loss_fn(pred, y_batch.view(-1))
             loss_collocation = mu_colloc * loss_col(model, u_batch, xt_batch)
             
-            xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
-            pred_ic = model(u_batch, xt_start)
-            ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
-            ddt_pred_ic = ddxt_pred_ic[:, 1]
-            loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
+            # xt_start = torch.tensor([[x, t] for x, t in zip(np.linspace(ds_train.xmin, ds_train.xmax, u_batch.shape[0]), u_batch.shape[0]*[0.0])], dtype=torch.float32, device=device, requires_grad=True)
+            # pred_ic = model(u_batch, xt_start)
+            # ddxt_pred_ic = torch.autograd.grad(pred_ic, xt_start, grad_outputs=torch.ones_like(pred_ic))[0]
+            # ddt_pred_ic = ddxt_pred_ic[:, 1]
+            # loss_ic_deriv = mu_ic * loss_fn(ddt_pred_ic, torch.zeros_like(ddt_pred_ic))
             
             alphas = softadapt.get_alphas()
-            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation + alphas[2] * loss_ic_deriv
+            # loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation + alphas[2] * loss_ic_deriv
+            loss = alphas[0] * loss_boundary + alphas[1] * loss_collocation
             loss.backward()
             optimizer.step()
 
             train_losses.append(loss.item())
-            softadapt.update(torch.tensor([loss_boundary, loss_collocation, loss_ic_deriv]))
+            softadapt.update(torch.tensor([loss_boundary, loss_collocation]))
             wandb.log({"train_loss": loss.item(), "epoch": epoch})
             wandb.log({"train_loss_boundary": loss_boundary.item(), "epoch": epoch})
             wandb.log({"train_loss_collocation": loss_collocation.item(), "epoch": epoch})
-            wandb.log({"train_loss_ic_deriv": loss_ic_deriv.item(), "epoch": epoch})
             wandb.log({"alpha_boundary": alphas[0].item(), "epoch": epoch})
             wandb.log({"alpha_collocation": alphas[1].item(), "epoch": epoch})
-            wandb.log({"alpha_ic_deriv": alphas[2].item(), "epoch": epoch})
                 
         epoch_train_losses.append(np.mean(train_losses))
         wandb.log({"epoch_train_loss": epoch_train_losses[-1], "epoch": epoch})
