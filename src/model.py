@@ -161,7 +161,7 @@ class DeepONet(torch.nn.Module):
         self.TBN3 = torch.nn.BatchNorm1d(n_hidden)
         self.TBN4 = torch.nn.BatchNorm1d(n_hidden)
 
-        self.activation = torch.sin
+        self.activation = torch.tanh
 
     def set_batch(self, batch):
         self.batch = batch
@@ -214,7 +214,7 @@ class DeepONetNoBatchNorm(torch.nn.Module):
 
 
 
-        self.activation = torch.sin
+        self.activation = torch.tanh
 
     def set_batch(self, batch):
         self.batch = batch
